@@ -1,0 +1,1 @@
+const firebaseConfig={apiKey:"COLA_AQUI_A_TUA_API_KEY",authDomain:"o-teu-projeto.firebaseapp.com",projectId:"o-teu-projeto",storageBucket:"o-teu-projeto.appspot.com",messagingSenderId:"000000000000",appId:"1:000000000000:web:xxxxxxxxxxxxxxxxxxxxxx"};firebase.initializeApp(firebaseConfig);const auth=firebase.auth(),db=firebase.firestore();
