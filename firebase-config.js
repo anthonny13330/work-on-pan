@@ -1,9 +1,1 @@
-const firebaseConfig = {
-  apiKey: "AIzaSyBNojfflftsz13P0__b0ULtUvenNHb3AbA",
-  authDomain: "work-on-pan.firebaseapp.com",
-  projectId: "work-on-pan",
-  storageBucket: "work-on-pan.firebasestorage.app",
-  messagingSenderId: "345557065176",
-  appId: "1:345557065176:web:f35a1744ed0d4d15bf26ad",
-  measurementId: "G-J85VC6EWB0"
-};
+const firebaseConfig={apiKey:"AIzaSyBNojfflftsz13P0__b0ULtUvenNHb3AbA",authDomain:"work-on-pan.firebaseapp.com",projectId:"work-on-pan",storageBucket:"work-on-pan.firebasestorage.app",messagingSenderId:"345557065176",appId:"1:345557065176:web:f35a1744ed0d4d15bf26ad"};firebase.initializeApp(firebaseConfig);const auth=firebase.auth(),db=firebase.firestore();"AIzaSyBNojfflftsz13P0__b0ULtUvenNHb3AbA"===firebaseConfig.apiKey&&document.addEventListener("DOMContentLoaded",()=>{const e=document.createElement("div");e.style.cssText="position:fixed;inset:0;z-index:99999;background:#0a0f0d;color:#f0f5f3;display:flex;align-items:center;justify-content:center;padding:30px;font-family:sans-serif;text-align:center",e.innerHTML='<div style="max-width:460px">\n      <div style="font-size:2rem;margin-bottom:12px">⚠</div>\n      <p style="font-weight:600;margin-bottom:10px">firebase-config.js ainda tem os valores de exemplo.</p>\n      <p style="opacity:.7;font-size:.9rem;line-height:1.5">Abre este ficheiro no repositório e substitui apiKey, authDomain, projectId, etc. pelas credenciais reais do teu projeto — em Firebase Console → ⚙ Definições do projeto → Geral → "Os teus apps".</p>\n    </div>',document.body.appendChild(e)});
