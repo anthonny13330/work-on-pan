@@ -1,1 +1,273 @@
-<!DOCTYPE html><html lang="pt-PT"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mensagens — Work on Pan</title><link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"><style>*,::after,::before{box-sizing:border-box;margin:0;padding:0}:root{--bg:#0a0f0d;--teal:#2abfaa;--teal-dim:rgba(42,191,170,0.12);--white:#f0f5f3;--gray:rgba(240,245,243,0.5);--gray2:rgba(240,245,243,0.25);--card-bg:rgba(255,255,255,0.04);--card-border:rgba(42,191,170,0.15);--radius:14px}html[data-theme=light]{--bg:#f4f7f6;--white:#0a0f0d;--gray:rgba(10,15,13,0.55);--gray2:rgba(10,15,13,0.32);--card-bg:rgba(10,15,13,0.03);--card-border:rgba(42,191,170,0.28);--teal-dim:rgba(42,191,170,0.10)}body,html{min-height:100%;background:var(--bg);color:var(--white);font-family:'DM Sans',sans-serif}.navbar{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:14px 5%;background:rgba(10,15,13,.9);backdrop-filter:blur(16px);border-bottom:1px solid var(--card-border)}html[data-theme=light] .navbar{background:rgba(244,247,246,.9)}.logo{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:900;color:var(--white);text-decoration:none}.logo span{color:var(--teal);font-style:italic}.btn-back{background:0 0;border:none;color:var(--gray);font-family:'DM Sans',sans-serif;font-size:.88rem;cursor:pointer}.btn-back:hover{color:var(--white)}.safety-banner{display:flex;align-items:center;gap:10px;background:var(--teal-dim);border-bottom:1px solid var(--card-border);color:var(--teal);font-size:.82rem;padding:10px 5%;text-align:center;justify-content:center}.layout{display:grid;grid-template-columns:300px 1fr;height:calc(100vh - 96px)}.conv-list{border-right:1px solid var(--card-border);overflow-y:auto;padding:10px}.conv-item{display:flex;flex-direction:column;gap:3px;padding:12px 14px;border-radius:10px;cursor:pointer;margin-bottom:4px}.conv-item:hover{background:var(--card-bg)}.conv-item.active{background:var(--teal-dim)}.conv-item strong{font-size:.9rem}.conv-item span{font-size:.76rem;color:var(--gray)}.empty-conv{padding:30px 16px;color:var(--gray);font-size:.85rem;text-align:center}.chat-pane{display:flex;flex-direction:column;height:100%}.chat-head{padding:16px 22px;border-bottom:1px solid var(--card-border)}.chat-head strong{display:block;font-size:1rem}.chat-head span{font-size:.78rem;color:var(--gray)}.msgs{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:10px}.msg{max-width:60%;padding:10px 14px;border-radius:12px;font-size:.88rem;line-height:1.4}.msg.eu{align-self:flex-end;background:var(--teal);color:#06110d;border-bottom-right-radius:3px}.msg.contraparte{align-self:flex-start;background:var(--card-bg);border:1px solid var(--card-border);border-bottom-left-radius:3px}.msg.sistema{align-self:center;max-width:80%;background:var(--teal-dim);color:var(--teal);border-radius:10px;font-size:.8rem;text-align:center}.composer{display:flex;gap:10px;padding:14px 20px;border-top:1px solid var(--card-border)}.composer input{flex:1;background:var(--card-bg);border:1.5px solid var(--card-border);border-radius:10px;padding:11px 14px;color:var(--white);font-family:'DM Sans',sans-serif;font-size:.9rem}.composer input:focus{outline:0;border-color:var(--teal)}.composer button{background:var(--teal);border:none;border-radius:10px;padding:0 18px;color:#06110d;font-weight:500;cursor:pointer}.placeholder-pane{display:flex;align-items:center;justify-content:center;height:100%;color:var(--gray);font-size:.9rem}@media(max-width:700px){.layout{grid-template-columns:1fr}.conv-list{display:none}}</style></head><body><nav class="navbar"><a href="index.html" class="logo">Work <span>on Pan</span></a> <button class="btn-back" onclick='window.location.href="index.html"' data-i18n="nav.back">Voltar à plataforma</button></nav><div class="safety-banner">🛡 <span data-i18n="chat.safety">Mantém sempre a conversa e os pagamentos dentro do Work on Pan.</span></div><div class="layout"><aside class="conv-list" id="convList"></aside><main class="chat-pane" id="chatPane"><div class="placeholder-pane" id="chatPlaceholder" data-i18n="chat.select">Seleciona uma conversa para começar.</div></main></div><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script><script src="firebase-config.js"></script><script src="auth-guard.js"></script><script src="i18n.js"></script><script src="theme.js"></script><script src="chat.js"></script><script>let matchAtivo=new URLSearchParams(window.location.search).get("m"),chatsCache=[],unsubMensagens=null;function renderLista(n){chatsCache=n;document.getElementById("convList").innerHTML=n.length?n.map(n=>`<div class="conv-item ${n.id===matchAtivo?"active":""}" onclick="abrirConversa('${n.id}')">\n          <strong>${n.contraparte}</strong>\n          <span>${n.projeto}</span>\n        </div>`).join(""):`<div class="empty-conv">${T("chat.noConversations")}</div>`}function abrirConversa(n){matchAtivo=n,history.replaceState(null,"",`chat.html?m=${n}`),renderLista(chatsCache),renderConversaHead(),unsubMensagens&&unsubMensagens(),unsubMensagens=escutarMensagens(n,renderMensagens)}function renderConversaHead(){const n=chatsCache.find(n=>n.id===matchAtivo),e=document.getElementById("chatPane");e.innerHTML=n?`\n      <div class="chat-head"><strong>${n.contraparte}</strong><span>${n.projeto}</span></div>\n      <div class="msgs" id="msgsBox"></div>\n      <div class="composer">\n        <input id="msgInput" placeholder="${T("chat.placeholder")}" onkeydown="if(event.key==='Enter')enviar()"/>\n        <button onclick="enviar()">${T("btn.send")}</button>\n      </div>`:`<div class="placeholder-pane">${T("chat.select")}</div>`}function renderMensagens(n){const e=document.getElementById("msgsBox");e&&(e.innerHTML=n.map(n=>`<div class="msg ${n.autor}">${n.texto}</div>`).join(""),e.scrollTop=e.scrollHeight)}function enviar(){const n=document.getElementById("msgInput");n.value.trim()&&(enviarMensagem(matchAtivo,n.value),n.value="")}wopRequireAuth(function(){escutarChats(n=>{renderLista(n),matchAtivo&&(renderConversaHead(),unsubMensagens||(unsubMensagens=escutarMensagens(matchAtivo,renderMensagens)))})})</script></body></html>
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mensagens · Work on Pan</title>
+  <link rel="icon" href="pan.png">
+  <link rel="stylesheet" href="styles.css">
+  <script>try{var t=localStorage.getItem("wop_tema");if(t==="claro")document.documentElement.dataset.theme="light";if(t==="escuro")document.documentElement.dataset.theme="dark"}catch(e){}</script>
+</head>
+<body>
+  <header id="topo" class="topo"></header>
+
+  <main class="chat-principal">
+    <div class="caixa-entrada" id="caixa">
+      <!-- Lista de conversas -->
+      <section class="lista-conversas" aria-labelledby="tituloMensagens">
+        <div class="lista-conversas-topo">
+          <h1 id="tituloMensagens">Mensagens</h1>
+          <label for="pesquisaConversas" class="so-leitores">Procurar conversa</label>
+          <input type="search" id="pesquisaConversas" placeholder="Procurar por pessoa ou projeto">
+          <div class="filtro-conversas" role="group" aria-label="Filtrar conversas">
+            <button type="button" data-filtro="todas" aria-pressed="true">Todas</button>
+            <button type="button" data-filtro="por-ler" aria-pressed="false">Por ler</button>
+            <button type="button" data-filtro="projetos" aria-pressed="false">Sobre projetos</button>
+          </div>
+        </div>
+        <ul class="conversas" id="listaConversas">
+          <li class="vazio texto-pequeno">A carregar conversas…</li>
+        </ul>
+      </section>
+
+      <!-- Conversa aberta -->
+      <section class="painel-conversa" id="painelConversa" aria-live="polite">
+        <div class="conversa-topo">
+          <button type="button" class="voltar-lista" onclick="fecharConversa()">← Conversas</button>
+          <div class="pessoa">
+            <span class="avatar" id="cvAvatar" aria-hidden="true"></span>
+            <div style="min-width: 0">
+              <strong id="cvNome"></strong>
+              <small id="cvProjeto"></small>
+            </div>
+          </div>
+        </div>
+        <div class="contexto-projeto" id="cvContexto" hidden></div>
+        <div class="mensagens" id="mensagens"></div>
+        <form class="escrever" id="formMensagem">
+          <label for="textoMensagem" class="so-leitores">Escrever mensagem</label>
+          <textarea id="textoMensagem" rows="1" maxlength="4000" placeholder="Escreve uma mensagem…"></textarea>
+          <button type="submit" class="botao botao-principal">Enviar</button>
+        </form>
+        <p class="nota-seguranca">Enter envia · Shift+Enter muda de linha. Nunca partilhes palavras-passe nem dados bancários pelo chat.</p>
+      </section>
+
+      <div class="sem-conversa" id="semConversa">
+        <div>
+          <h2>Escolhe uma conversa</h2>
+          <p>As conversas abrem-se quando um freelancer envia uma proposta<br>ou quando um cliente contacta um freelancer.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="app.js"></script>
+  <script>
+    let conversas = [];
+    let filtro = "todas";
+    let conversaAtiva = new URLSearchParams(location.search).get("c");
+    let pararMensagens = null;
+    const projetosCache = {};
+
+    function outraPessoa(c) {
+      const id = c.participantes.find((p) => p !== wopUser.uid);
+      return { id, nome: c.nomes?.[id] || c.participantesNomes?.[id] || "Utilizador" };
+    }
+
+    /* Lista */
+
+    function desenharLista() {
+      const termo = $("pesquisaConversas").value.trim().toLowerCase();
+      const lista = conversas.filter((c) => {
+        const texto = (outraPessoa(c).nome + " " + (c.projetoTitulo || c.projeto || "")).toLowerCase();
+        if (termo && !texto.includes(termo)) return false;
+        if (filtro === "por-ler") return conversaPorLer(c, wopUser.uid);
+        if (filtro === "projetos") return Boolean(c.projetoId);
+        return true;
+      });
+
+      const alvo = $("listaConversas");
+      if (!conversas.length) {
+        alvo.innerHTML = `<li class="vazio texto-pequeno">
+          ${wopConta.tipo === "cliente"
+            ? 'Ainda não tens conversas. Aparecem aqui quando recebes uma proposta ou contactas um freelancer em <a href="index.html#freelancers">Procurar freelancers</a>.'
+            : 'Ainda não tens conversas. Envia uma proposta num <a href="projetos.html">projeto aberto</a> e a conversa com o cliente abre-se aqui.'}
+        </li>`;
+        return;
+      }
+      if (!lista.length) {
+        alvo.innerHTML = `<li class="vazio texto-pequeno">Nenhuma conversa neste filtro.</li>`;
+        return;
+      }
+
+      alvo.innerHTML = lista.map((c) => {
+        const pessoa = outraPessoa(c);
+        const porLer = conversaPorLer(c, wopUser.uid);
+        const minha = c.ultimoAutor === wopUser.uid ? "Tu: " : "";
+        return `
+          <li class="${porLer ? "por-ler" : ""}">
+            <button type="button" onclick="abrirConversa('${esc(c.id)}')" ${c.id === conversaAtiva ? 'aria-current="true"' : ""}>
+              <span class="avatar" aria-hidden="true">${esc(iniciais(pessoa.nome))}</span>
+              <span class="conversa-nome">${esc(pessoa.nome)}${porLer ? '<span class="so-leitores"> (por ler)</span>' : ""}</span>
+              <span class="conversa-hora">${esc(horaCurta(c.ultimaMensagemHora))}</span>
+              <span class="conversa-projeto">${esc(c.projetoTitulo || c.projeto || "Contacto direto")}</span>
+              <span class="conversa-ultima">${esc(minha + (c.ultimaMensagem || ""))}</span>
+            </button>
+          </li>`;
+      }).join("");
+    }
+
+    document.querySelectorAll("[data-filtro]").forEach((b) =>
+      b.addEventListener("click", () => {
+        filtro = b.dataset.filtro;
+        document.querySelectorAll("[data-filtro]").forEach((x) => x.setAttribute("aria-pressed", x === b));
+        desenharLista();
+      })
+    );
+    $("pesquisaConversas").addEventListener("input", desenharLista);
+
+    /* Conversa */
+
+    function abrirConversa(id) {
+      const c = conversas.find((x) => x.id === id);
+      if (!c) return;
+      const mudou = conversaAtiva !== id || !pararMensagens;
+      conversaAtiva = id;
+      history.replaceState(null, "", "chat.html?c=" + encodeURIComponent(id));
+      $("caixa").classList.add("com-conversa");
+
+      const pessoa = outraPessoa(c);
+      $("cvAvatar").textContent = iniciais(pessoa.nome);
+      $("cvNome").textContent = pessoa.nome;
+      $("cvProjeto").textContent = c.projetoTitulo || c.projeto || "Contacto direto";
+      desenharContexto(c);
+      desenharLista();
+
+      if (mudou) {
+        if (pararMensagens) pararMensagens();
+        $("mensagens").innerHTML = "";
+        pararMensagens = db.collection("chats").doc(id).collection("mensagens")
+          .orderBy("hora", "asc")
+          .onSnapshot(
+            (snap) => desenharMensagens(snap.docs.map((d) => d.data({ serverTimestamps: "estimate" }))),
+            (e) => {
+              console.error("[Work on Pan] mensagens:", e);
+              $("mensagens").innerHTML = `<p class="msg sistema">Não foi possível carregar as mensagens.</p>`;
+            }
+          );
+        $("textoMensagem").focus();
+      }
+      marcarComoLida(c);
+    }
+
+    // Mostra o estado do projeto por cima das mensagens (ex.: "A receber propostas").
+    function desenharContexto(c) {
+      const alvo = $("cvContexto");
+      if (!c.projetoId) return (alvo.hidden = true);
+      const mostrar = (p) => {
+        if (conversaAtiva !== c.id) return;
+        if (!p) {
+          alvo.textContent = "Este projeto já foi apagado pelo cliente.";
+        } else {
+          const orcamento = p.orcamento ?? p.budget;
+          alvo.innerHTML = `${etiqueta(ESTADOS_PROJETO, p.estado)} Orçamento ${esc(dinheiro(orcamento, p.moeda))} · ${esc(p.prazoDias || "?")} dias ·
+            <a href="index.html">${wopConta.tipo === "cliente" ? "ver propostas" : "ver a minha proposta"}</a>`;
+        }
+        alvo.hidden = false;
+      };
+      if (c.projetoId in projetosCache) return mostrar(projetosCache[c.projetoId]);
+      db.collection("projetos").doc(c.projetoId).get()
+        .then((d) => mostrar((projetosCache[c.projetoId] = d.exists ? d.data() : null)))
+        .catch(() => (alvo.hidden = true));
+    }
+
+    function desenharMensagens(msgs) {
+      const caixa = $("mensagens");
+      const noFundo = caixa.scrollHeight - caixa.scrollTop - caixa.clientHeight < 80;
+      caixa.innerHTML = msgs.map((m) => {
+        const classe = m.autor === "sistema" ? "sistema" : m.autor === wopUser.uid ? "minha" : "outra";
+        const hora = m.hora ? `<time>${esc(horaCurta(m.hora))}</time>` : "";
+        return `<div class="msg ${classe}">${esc(m.texto)}${classe === "sistema" ? "" : hora}</div>`;
+      }).join("");
+      if (noFundo || msgs.length < 20) caixa.scrollTop = caixa.scrollHeight;
+      const c = conversas.find((x) => x.id === conversaAtiva);
+      if (c) marcarComoLida(c);
+    }
+
+    const marcadasHaPouco = {};
+    function marcarComoLida(c) {
+      if (!conversaPorLer(c, wopUser.uid) || document.hidden) return;
+      if (Date.now() - (marcadasHaPouco[c.id] || 0) < 3000) return;
+      marcadasHaPouco[c.id] = Date.now();
+      db.collection("chats").doc(c.id).update({ ["lidoEm." + wopUser.uid]: agora() }).catch(() => {});
+    }
+
+    function fecharConversa() {
+      if (pararMensagens) pararMensagens();
+      pararMensagens = null;
+      conversaAtiva = null;
+      history.replaceState(null, "", "chat.html");
+      $("caixa").classList.remove("com-conversa");
+      desenharLista();
+    }
+
+    /* Escrever */
+
+    const campo = $("textoMensagem");
+    campo.addEventListener("input", () => {
+      campo.style.height = "auto";
+      campo.style.height = Math.min(campo.scrollHeight, 160) + "px";
+    });
+    campo.addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter" && !ev.shiftKey) {
+        ev.preventDefault();
+        $("formMensagem").requestSubmit();
+      }
+    });
+
+    $("formMensagem").addEventListener("submit", (ev) => {
+      ev.preventDefault();
+      const texto = campo.value.trim();
+      if (!texto || !conversaAtiva) return;
+      campo.value = "";
+      campo.style.height = "auto";
+      enviarMensagem(conversaAtiva, texto).catch((e) => {
+        campo.value = texto;
+        avisar("A mensagem não foi enviada. " + traduzirErro(e), "erro");
+      });
+    });
+
+    document.addEventListener("visibilitychange", () => {
+      const c = conversas.find((x) => x.id === conversaAtiva);
+      if (c && !document.hidden) marcarComoLida(c);
+    });
+
+    /* Arranque */
+
+    exigirSessao((user) => {
+      // Sem orderBy para não depender de índice composto; ordena-se aqui.
+      db.collection("chats").where("participantes", "array-contains", user.uid).onSnapshot(
+        (snap) => {
+          conversas = ordenarPorData(
+            snap.docs.map((d) => ({ id: d.id, ...d.data({ serverTimestamps: "estimate" }) })),
+            "ultimaMensagemHora"
+          );
+          desenharLista();
+          if (conversaAtiva) {
+            if (conversas.some((c) => c.id === conversaAtiva)) abrirConversa(conversaAtiva);
+            else if (!snap.metadata.fromCache) fecharConversa();
+          }
+        },
+        (e) => {
+          console.error("[Work on Pan] conversas:", e);
+          $("listaConversas").innerHTML = `<li class="vazio texto-pequeno">Não foi possível carregar as conversas. ${esc(traduzirErro(e))}</li>`;
+        }
+      );
+    });
+  </script>
+</body>
+</html>
