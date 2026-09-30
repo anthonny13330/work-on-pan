@@ -1,9 +1,7 @@
 /* Work on Pan — código partilhado por todas as páginas.
- * Carregar depois do Firebase e do firebase-config.js. */
+ * Carregar depois do supabase-js e do supabase-config.js. */
 
-const auth = firebase.auth();
-const db = firebase.firestore();
-const agora = () => firebase.firestore.FieldValue.serverTimestamp();
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_CHAVE_PUBLICA);
 
 // Preencher antes de publicar o site (aparecem na política de privacidade e no rodapé).
 const RESPONSAVEL_DADOS = "[Nome do responsável pelo Work on Pan]";
@@ -74,14 +72,9 @@ function etiqueta(mapa, estado) {
   return `<span class="etiqueta ${e.classe}">${esc(e.texto)}</span>`;
 }
 
-function paraData(ts) {
-  if (!ts) return null;
-  return typeof ts.toDate === "function" ? ts.toDate() : new Date(ts);
-}
-
-function dataCurta(ts) {
-  const d = paraData(ts);
-  if (!d) return "agora mesmo";
+function dataCurta(valor) {
+  if (!valor) return "agora mesmo";
+  const d = new Date(valor);
   const dias = Math.floor((Date.now() - d.getTime()) / 86400000);
   if (dias <= 0) return "hoje";
   if (dias === 1) return "ontem";
@@ -89,9 +82,9 @@ function dataCurta(ts) {
   return d.toLocaleDateString("pt-PT", { day: "numeric", month: "short" });
 }
 
-function horaCurta(ts) {
-  const d = paraData(ts);
-  if (!d) return "";
+function horaCurta(valor) {
+  if (!valor) return "";
+  const d = new Date(valor);
   const hoje = new Date().toDateString() === d.toDateString();
   return hoje
     ? d.toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" })
@@ -111,11 +104,16 @@ function nomeCompleto(p) {
   return [p?.nome, p?.sobrenome].filter(Boolean).join(" ") || "Utilizador";
 }
 
-function ordenarPorData(lista, campo = "createdAt") {
-  return lista.sort((a, b) => (paraData(b[campo])?.getTime() || Date.now()) - (paraData(a[campo])?.getTime() || Date.now()));
+// Nome a mostrar de um cliente: a empresa, se tiver, senão o nome.
+function nomeCliente(p) {
+  return p?.empresa || nomeCompleto(p);
 }
 
-// Mensagem curta no canto do ecrã. tipo: "ok" | "erro"
+function listaCompetencias(texto, maximo) {
+  return texto.split(",").map((s) => s.trim()).filter(Boolean).slice(0, maximo);
+}
+
+// Mensagem curta no fundo do ecrã. tipo: "ok" | "erro"
 function avisar(texto, tipo = "ok") {
   let caixa = $("avisoFlutuante");
   if (!caixa) {
@@ -131,22 +129,32 @@ function avisar(texto, tipo = "ok") {
 }
 
 function traduzirErro(e) {
-  const code = e?.code || "";
+  if (!e) return "Algo correu mal. Tenta outra vez.";
+  // Erros lançados pelas nossas funções na base de dados já vêm em português.
+  if (e.code === "P0001") return e.message;
   const mapa = {
-    "auth/invalid-email": "Esse e-mail não parece válido.",
-    "auth/user-disabled": "Esta conta foi desativada.",
-    "auth/user-not-found": "E-mail ou palavra-passe incorretos.",
-    "auth/wrong-password": "E-mail ou palavra-passe incorretos.",
-    "auth/invalid-credential": "E-mail ou palavra-passe incorretos.",
-    "auth/email-already-in-use": "Já existe uma conta com este e-mail. Experimenta entrar.",
-    "auth/weak-password": "A palavra-passe tem de ter pelo menos 8 caracteres.",
-    "auth/too-many-requests": "Muitas tentativas seguidas. Espera um pouco e tenta de novo.",
-    "auth/network-request-failed": "Sem ligação à internet. Verifica a rede.",
-    "auth/requires-recent-login": "Por segurança, sai e volta a entrar antes de fazer isto.",
-    "permission-denied": "Não tens permissão para esta ação.",
-    unavailable: "O servidor não respondeu. Tenta daqui a pouco.",
+    invalid_credentials: "E-mail ou palavra-passe incorretos.",
+    email_not_confirmed: "Ainda não confirmaste o e-mail. Abre o link que te enviámos.",
+    user_already_exists: "Já existe uma conta com este e-mail. Experimenta entrar.",
+    email_exists: "Já existe uma conta com este e-mail. Experimenta entrar.",
+    weak_password: "A palavra-passe é demasiado fraca. Usa pelo menos 8 caracteres.",
+    over_request_rate_limit: "Muitas tentativas seguidas. Espera um pouco e tenta de novo.",
+    over_email_send_rate_limit: "Já enviámos vários e-mails. Espera uns minutos e tenta de novo.",
+    same_password: "A nova palavra-passe tem de ser diferente da atual.",
+    validation_failed: "Há um campo com um valor inválido.",
+    "23514": "Há um campo com um valor fora dos limites permitidos.",
+    "23505": "Isto já existe.",
+    "42501": "Não tens permissão para esta ação.",
   };
-  return mapa[code] || mapa[code.replace("firestore/", "")] || "Algo correu mal. Tenta outra vez.";
+  if (mapa[e.code]) return mapa[e.code];
+  if (/fetch|network/i.test(e.message || "")) return "Sem ligação ao servidor. Verifica a internet.";
+  return "Algo correu mal. Tenta outra vez.";
+}
+
+// Lança o erro de uma resposta do Supabase, para usar com async/await.
+function ok({ data, error }) {
+  if (error) throw error;
+  return data;
 }
 
 /* ── Tema ────────────────────────────────────────────────────── */
@@ -171,98 +179,48 @@ function aplicarTema(tema) {
 
 /* ── Sessão e perfil ─────────────────────────────────────────── */
 
-let wopUser = null;   // utilizador do Firebase Auth
-let wopConta = null;  // documento privado users/{uid}
-let wopPerfil = null; // documento público perfis/{uid}
+let wopUser = null;   // utilizador do Supabase Auth
+let wopPerfil = null; // linha de public.perfis (inclui o tipo: cliente | freelancer)
 
-function carregarConta(user) {
-  const refConta = db.collection("users").doc(user.uid);
-  const refPerfil = db.collection("perfis").doc(user.uid);
-  return Promise.all([refConta.get(), refPerfil.get()]).then(([c, p]) => {
-    if (!c.exists) return null;
-    const conta = { id: user.uid, ...c.data() };
-    if (p.exists) return { conta, perfil: { id: user.uid, ...p.data() } };
-    // Contas antigas não têm perfil público: cria-se a partir da conta.
-    const perfil = perfilPublicoDe(conta);
-    return refPerfil.set(perfil).then(() => ({ conta, perfil: { id: user.uid, ...perfil } }));
-  });
+async function carregarSessao() {
+  const { data } = await sb.auth.getSession();
+  const user = data.session?.user;
+  if (!user) return null;
+  const perfil = ok(await sb.from("perfis").select("*").eq("id", user.id).maybeSingle());
+  if (!perfil) return null;
+  wopUser = user;
+  wopPerfil = perfil;
+  return perfil;
 }
 
-function perfilPublicoDe(conta) {
-  const base = {
-    nome: conta.nome || "",
-    sobrenome: conta.sobrenome || "",
-    tipo: conta.tipo,
-    atualizadoEm: agora(),
-  };
-  if (conta.tipo === "freelancer") {
-    return {
-      ...base,
-      area: conta.area || "",
-      bio: conta.bio || "",
-      valorHora: conta.valorHora ?? null,
-      moeda: conta.moeda || "EUR",
-      competencias: conta.competencias || [],
-      disponivel: conta.disponivel !== false,
-    };
-  }
-  return { ...base, empresa: conta.empresa || "", segmento: conta.segmento || "" };
-}
-
-// Páginas privadas: sem sessão → login. `pronto(user, conta, perfil)`
+// Páginas privadas: sem sessão → login. `pronto(user, perfil)`
 function exigirSessao(pronto) {
-  auth.onAuthStateChanged(
-    (user) => {
-      if (!user) {
+  carregarSessao()
+    .then((perfil) => {
+      if (!perfil) {
         const volta = encodeURIComponent(location.pathname.replace(/^\//, "") + location.search);
         location.href = "login.html?volta=" + volta;
         return;
       }
-      carregarConta(user)
-        .then((r) => {
-          if (!r) return auth.signOut().then(() => (location.href = "cadastro.html?sem-perfil=1"));
-          wopUser = user;
-          wopConta = r.conta;
-          wopPerfil = r.perfil;
-          montarTopo();
-          pronto(user, r.conta, r.perfil);
-        })
-        .catch((e) => erroFatal(e));
-    },
-    (e) => erroFatal(e)
-  );
+      montarTopo();
+      pronto(wopUser, wopPerfil);
+    })
+    .catch(erroFatal);
 }
 
 // Páginas públicas: funcionam com ou sem sessão.
 function sessaoOpcional(pronto) {
-  let feito = false;
-  auth.onAuthStateChanged((user) => {
-    if (feito) return;
-    feito = true;
-    if (!user) {
+  carregarSessao()
+    .catch((e) => console.error("[Work on Pan]", e))
+    .finally(() => {
       montarTopo();
-      return pronto(null, null, null);
-    }
-    carregarConta(user)
-      .then((r) => {
-        if (r) {
-          wopUser = user;
-          wopConta = r.conta;
-          wopPerfil = r.perfil;
-        }
-        montarTopo();
-        pronto(r ? user : null, r?.conta || null, r?.perfil || null);
-      })
-      .catch((e) => {
-        console.error("[Work on Pan]", e);
-        montarTopo();
-        pronto(null, null, null);
-      });
-  });
+      pronto(wopUser, wopPerfil);
+    });
 }
 
-function sair() {
-  auth.signOut().then(() => (location.href = "login.html"));
+async function sair() {
+  await sb.auth.signOut();
+  location.href = "login.html";
 }
 
 function erroFatal(e) {
@@ -278,7 +236,56 @@ function erroFatal(e) {
   }
 }
 
+/* ── Tempo real ──────────────────────────────────────────────── */
+
+// Chama `callback` (agrupado, no máximo 1x a cada 300ms) quando alguma das tabelas muda.
+function aoMudar(tabelas, callback, filtro) {
+  let espera;
+  const agrupado = () => {
+    clearTimeout(espera);
+    espera = setTimeout(callback, 300);
+  };
+  const canal = sb.channel("wop-" + tabelas.join("-") + "-" + Math.random().toString(36).slice(2));
+  tabelas.forEach((table) =>
+    canal.on("postgres_changes", { event: "*", schema: "public", table, ...(filtro ? { filter: filtro } : {}) }, agrupado)
+  );
+  canal.subscribe();
+  return canal;
+}
+
+/* ── Conversas ───────────────────────────────────────────────── */
+
+// Abre (ou cria) a conversa com outra pessoa e vai para a caixa de mensagens.
+async function irParaConversa(outroId, projetoId = null) {
+  try {
+    const id = ok(await sb.rpc("abrir_conversa", { p_outro: outroId, p_projeto: projetoId }));
+    location.href = "chat.html?c=" + encodeURIComponent(id);
+  } catch (e) {
+    avisar(traduzirErro(e), "erro");
+  }
+}
+
+function conversaPorLer(c, uid) {
+  if (c.ultimo_autor_id === uid) return false;
+  const lida = uid === c.cliente_id ? c.lido_cliente_em : c.lido_freelancer_em;
+  return !lida || new Date(lida) < new Date(c.ultima_mensagem_em);
+}
+
+async function atualizarContadorMensagens() {
+  const el = $("contadorMensagens");
+  if (!el || !wopUser) return;
+  const { data } = await sb
+    .from("conversas")
+    .select("cliente_id, freelancer_id, ultimo_autor_id, ultima_mensagem_em, lido_cliente_em, lido_freelancer_em");
+  const n = (data || []).filter((c) => conversaPorLer(c, wopUser.id)).length;
+  el.hidden = n === 0;
+  el.textContent = n;
+  el.setAttribute("aria-label", `${n} conversa${n === 1 ? "" : "s"} por ler`);
+}
+
 /* ── Cabeçalho, rodapé e aviso de cookies ────────────────────── */
+
+let vigiaMensagens = null;
 
 function montarTopo() {
   const topo = $("topo");
@@ -287,11 +294,11 @@ function montarTopo() {
   const ativo = (p) => (p === pagina ? ' aria-current="page"' : "");
 
   let links;
-  if (wopConta) {
-    const painel = wopConta.tipo === "cliente" ? "Os meus projetos" : "As minhas propostas";
+  if (wopPerfil) {
+    const cliente = wopPerfil.tipo === "cliente";
     links = `
-      <a href="index.html"${ativo("index")}>${painel}</a>
-      <a href="projetos.html"${ativo("projetos")}>${wopConta.tipo === "cliente" ? "Ver projetos publicados" : "Procurar projetos"}</a>
+      <a href="index.html"${ativo("index")}>${cliente ? "Os meus projetos" : "As minhas propostas"}</a>
+      <a href="projetos.html"${ativo("projetos")}>${cliente ? "Ver projetos publicados" : "Procurar projetos"}</a>
       <a href="chat.html"${ativo("chat")}>Mensagens <span class="contador" id="contadorMensagens" hidden></span></a>
       <a href="definicoes.html"${ativo("definicoes")}>A minha conta</a>
       <button type="button" class="botao-texto" onclick="sair()">Sair</button>`;
@@ -304,7 +311,7 @@ function montarTopo() {
 
   topo.innerHTML = `
     <div class="topo-interior">
-      <a href="${wopConta ? "index.html" : "projetos.html"}" class="marca">
+      <a href="${wopPerfil ? "index.html" : "projetos.html"}" class="marca">
         <img src="pan.png" alt="" width="28" height="28"> Work on Pan
       </a>
       <button type="button" class="botao-menu" aria-expanded="false" aria-controls="menuPrincipal"
@@ -314,7 +321,10 @@ function montarTopo() {
       <nav id="menuPrincipal" class="menu" aria-label="Principal">${links}</nav>
     </div>`;
 
-  if (wopUser) vigiarMensagensPorLer();
+  if (wopUser) {
+    atualizarContadorMensagens();
+    if (!vigiaMensagens) vigiaMensagens = aoMudar(["conversas"], atualizarContadorMensagens);
+  }
 }
 
 function montarRodape() {
@@ -371,85 +381,6 @@ function avisoCookies() {
     barra.remove();
   };
   document.body.appendChild(barra);
-}
-
-/* ── Mensagens por ler (contador no menu) ────────────────────── */
-
-let pararVigiaMensagens = null;
-
-function conversaPorLer(chat, uid) {
-  if (!chat.ultimoAutor || chat.ultimoAutor === uid) return false;
-  const lida = paraData(chat.lidoEm?.[uid]);
-  const ultima = paraData(chat.ultimaMensagemHora);
-  if (!ultima) return false;
-  return !lida || lida < ultima;
-}
-
-function vigiarMensagensPorLer() {
-  if (pararVigiaMensagens) return;
-  pararVigiaMensagens = db
-    .collection("chats")
-    .where("participantes", "array-contains", wopUser.uid)
-    .onSnapshot(
-      (snap) => {
-        const n = snap.docs.filter((d) => conversaPorLer(d.data({ serverTimestamps: "estimate" }), wopUser.uid)).length;
-        const el = $("contadorMensagens");
-        if (!el) return;
-        el.hidden = n === 0;
-        el.textContent = n;
-        el.setAttribute("aria-label", `${n} conversa${n === 1 ? "" : "s"} por ler`);
-      },
-      (e) => console.error("[Work on Pan] mensagens:", e)
-    );
-}
-
-/* ── Conversas: criar/abrir ──────────────────────────────────── */
-
-// Abre (ou cria) a conversa sobre um projeto entre o cliente e o freelancer.
-function garantirConversa({ clienteId, clienteNome, freelancerId, freelancerNome, projetoId, projetoTitulo }) {
-  const id = projetoId
-    ? `p_${projetoId}_${freelancerId}`
-    : "d_" + [clienteId, freelancerId].sort().join("_");
-  const ref = db.collection("chats").doc(id);
-  return ref.get().then((doc) => {
-    if (doc.exists) return id;
-    const aviso = projetoId
-      ? `Conversa aberta sobre o projeto "${projetoTitulo}".`
-      : "Conversa direta aberta.";
-    return ref
-      .set({
-        participantes: [clienteId, freelancerId],
-        nomes: { [clienteId]: clienteNome || "Cliente", [freelancerId]: freelancerNome || "Freelancer" },
-        clienteId,
-        freelancerId,
-        projetoId: projetoId || null,
-        projetoTitulo: projetoTitulo || "Contacto direto",
-        criadoEm: agora(),
-        ultimaMensagem: aviso,
-        ultimaMensagemHora: agora(),
-        ultimoAutor: "sistema",
-        lidoEm: { [wopUser.uid]: agora() },
-      })
-      .then(() => ref.collection("mensagens").add({ autor: "sistema", texto: aviso, hora: agora() }))
-      .then(() => id);
-  });
-}
-
-function enviarMensagem(chatId, texto, autor = wopUser.uid) {
-  const limpo = String(texto || "").trim();
-  if (!limpo) return Promise.resolve();
-  const ref = db.collection("chats").doc(chatId);
-  return ref
-    .collection("mensagens")
-    .add({ autor, texto: limpo, hora: agora() })
-    .then(() =>
-      ref.update({
-        ultimaMensagem: limpo.slice(0, 140),
-        ultimaMensagemHora: agora(),
-        ultimoAutor: autor,
-        ["lidoEm." + wopUser.uid]: agora(),
-      })
-    );
 }
 
 /* ── Arranque comum ──────────────────────────────────────────── */

@@ -61,39 +61,56 @@
     </div>
   </main>
 
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="firebase-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
+  <script src="supabase-config.js"></script>
   <script src="app.js"></script>
   <script>
     let conversas = [];
     let filtro = "todas";
     let conversaAtiva = new URLSearchParams(location.search).get("c");
-    let pararMensagens = null;
-    const projetosCache = {};
+    let canalMensagens = null;
+    let mensagens = [];
+
+    const CAMPOS_CONVERSA = `*,
+      cliente:perfis!conversas_cliente_id_fkey(nome, sobrenome, empresa),
+      freelancer:perfis!conversas_freelancer_id_fkey(nome, sobrenome),
+      projeto:projetos(id, titulo, estado, orcamento, moeda, prazo_dias)`;
 
     function outraPessoa(c) {
-      const id = c.participantes.find((p) => p !== wopUser.uid);
-      return { id, nome: c.nomes?.[id] || c.participantesNomes?.[id] || "Utilizador" };
+      return c.cliente_id === wopUser.id ? nomeCompleto(c.freelancer) : nomeCliente(c.cliente);
     }
 
     /* Lista */
 
+    async function carregarConversas() {
+      const { data, error } = await sb.from("conversas").select(CAMPOS_CONVERSA).order("ultima_mensagem_em", { ascending: false });
+      if (error) {
+        console.error("[Work on Pan] conversas:", error);
+        $("listaConversas").innerHTML = `<li class="vazio texto-pequeno">Não foi possível carregar as conversas. ${esc(traduzirErro(error))}</li>`;
+        return;
+      }
+      conversas = data;
+      desenharLista();
+      if (conversaAtiva) {
+        if (conversas.some((c) => c.id === conversaAtiva)) abrirConversa(conversaAtiva);
+        else fecharConversa();
+      }
+    }
+
     function desenharLista() {
       const termo = $("pesquisaConversas").value.trim().toLowerCase();
       const lista = conversas.filter((c) => {
-        const texto = (outraPessoa(c).nome + " " + (c.projetoTitulo || c.projeto || "")).toLowerCase();
+        const texto = (outraPessoa(c) + " " + (c.projeto?.titulo || "")).toLowerCase();
         if (termo && !texto.includes(termo)) return false;
-        if (filtro === "por-ler") return conversaPorLer(c, wopUser.uid);
-        if (filtro === "projetos") return Boolean(c.projetoId);
+        if (filtro === "por-ler") return conversaPorLer(c, wopUser.id);
+        if (filtro === "projetos") return Boolean(c.projeto_id);
         return true;
       });
 
       const alvo = $("listaConversas");
       if (!conversas.length) {
         alvo.innerHTML = `<li class="vazio texto-pequeno">
-          ${wopConta.tipo === "cliente"
+          ${wopPerfil.tipo === "cliente"
             ? 'Ainda não tens conversas. Aparecem aqui quando recebes uma proposta ou contactas um freelancer em <a href="index.html#freelancers">Procurar freelancers</a>.'
             : 'Ainda não tens conversas. Envia uma proposta num <a href="projetos.html">projeto aberto</a> e a conversa com o cliente abre-se aqui.'}
         </li>`;
@@ -105,17 +122,17 @@
       }
 
       alvo.innerHTML = lista.map((c) => {
-        const pessoa = outraPessoa(c);
-        const porLer = conversaPorLer(c, wopUser.uid);
-        const minha = c.ultimoAutor === wopUser.uid ? "Tu: " : "";
+        const nome = outraPessoa(c);
+        const porLer = conversaPorLer(c, wopUser.id);
+        const minha = c.ultimo_autor_id === wopUser.id ? "Tu: " : "";
         return `
           <li class="${porLer ? "por-ler" : ""}">
             <button type="button" onclick="abrirConversa('${esc(c.id)}')" ${c.id === conversaAtiva ? 'aria-current="true"' : ""}>
-              <span class="avatar" aria-hidden="true">${esc(iniciais(pessoa.nome))}</span>
-              <span class="conversa-nome">${esc(pessoa.nome)}${porLer ? '<span class="so-leitores"> (por ler)</span>' : ""}</span>
-              <span class="conversa-hora">${esc(horaCurta(c.ultimaMensagemHora))}</span>
-              <span class="conversa-projeto">${esc(c.projetoTitulo || c.projeto || "Contacto direto")}</span>
-              <span class="conversa-ultima">${esc(minha + (c.ultimaMensagem || ""))}</span>
+              <span class="avatar" aria-hidden="true">${esc(iniciais(nome))}</span>
+              <span class="conversa-nome">${esc(nome)}${porLer ? '<span class="so-leitores"> (por ler)</span>' : ""}</span>
+              <span class="conversa-hora">${esc(horaCurta(c.ultima_mensagem_em))}</span>
+              <span class="conversa-projeto">${esc(c.projeto?.titulo || "Contacto direto")}</span>
+              <span class="conversa-ultima">${esc(minha + c.ultima_mensagem)}</span>
             </button>
           </li>`;
       }).join("");
@@ -132,83 +149,82 @@
 
     /* Conversa */
 
-    function abrirConversa(id) {
+    async function abrirConversa(id) {
       const c = conversas.find((x) => x.id === id);
       if (!c) return;
-      const mudou = conversaAtiva !== id || !pararMensagens;
+      const mudou = conversaAtiva !== id || !canalMensagens;
       conversaAtiva = id;
       history.replaceState(null, "", "chat.html?c=" + encodeURIComponent(id));
       $("caixa").classList.add("com-conversa");
 
-      const pessoa = outraPessoa(c);
-      $("cvAvatar").textContent = iniciais(pessoa.nome);
-      $("cvNome").textContent = pessoa.nome;
-      $("cvProjeto").textContent = c.projetoTitulo || c.projeto || "Contacto direto";
+      const nome = outraPessoa(c);
+      $("cvAvatar").textContent = iniciais(nome);
+      $("cvNome").textContent = nome;
+      $("cvProjeto").textContent = c.projeto?.titulo || "Contacto direto";
       desenharContexto(c);
       desenharLista();
-
-      if (mudou) {
-        if (pararMensagens) pararMensagens();
-        $("mensagens").innerHTML = "";
-        pararMensagens = db.collection("chats").doc(id).collection("mensagens")
-          .orderBy("hora", "asc")
-          .onSnapshot(
-            (snap) => desenharMensagens(snap.docs.map((d) => d.data({ serverTimestamps: "estimate" }))),
-            (e) => {
-              console.error("[Work on Pan] mensagens:", e);
-              $("mensagens").innerHTML = `<p class="msg sistema">Não foi possível carregar as mensagens.</p>`;
-            }
-          );
-        $("textoMensagem").focus();
-      }
       marcarComoLida(c);
+
+      if (!mudou) return;
+      if (canalMensagens) sb.removeChannel(canalMensagens);
+      mensagens = [];
+      $("mensagens").innerHTML = "";
+
+      // Mensagens novas chegam em tempo real; a lista inicial vem de uma consulta.
+      canalMensagens = sb
+        .channel("mensagens-" + id)
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "mensagens", filter: `conversa_id=eq.${id}` },
+          ({ new: m }) => {
+            if (m.conversa_id !== conversaAtiva || mensagens.some((x) => x.id === m.id)) return;
+            mensagens.push(m);
+            desenharMensagens();
+          })
+        .subscribe();
+
+      const { data, error } = await sb.from("mensagens").select("*").eq("conversa_id", id).order("criado_em");
+      if (conversaAtiva !== id) return;
+      if (error) {
+        $("mensagens").innerHTML = `<p class="msg sistema">Não foi possível carregar as mensagens.</p>`;
+        return;
+      }
+      const vistas = new Set(data.map((m) => m.id));
+      mensagens = [...data, ...mensagens.filter((m) => !vistas.has(m.id))];
+      desenharMensagens(true);
+      $("textoMensagem").focus();
     }
 
-    // Mostra o estado do projeto por cima das mensagens (ex.: "A receber propostas").
+    // Mostra o estado do projeto por cima das mensagens (ex.: «A receber propostas»).
     function desenharContexto(c) {
       const alvo = $("cvContexto");
-      if (!c.projetoId) return (alvo.hidden = true);
-      const mostrar = (p) => {
-        if (conversaAtiva !== c.id) return;
-        if (!p) {
-          alvo.textContent = "Este projeto já foi apagado pelo cliente.";
-        } else {
-          const orcamento = p.orcamento ?? p.budget;
-          alvo.innerHTML = `${etiqueta(ESTADOS_PROJETO, p.estado)} Orçamento ${esc(dinheiro(orcamento, p.moeda))} · ${esc(p.prazoDias || "?")} dias ·
-            <a href="index.html">${wopConta.tipo === "cliente" ? "ver propostas" : "ver a minha proposta"}</a>`;
-        }
-        alvo.hidden = false;
-      };
-      if (c.projetoId in projetosCache) return mostrar(projetosCache[c.projetoId]);
-      db.collection("projetos").doc(c.projetoId).get()
-        .then((d) => mostrar((projetosCache[c.projetoId] = d.exists ? d.data() : null)))
-        .catch(() => (alvo.hidden = true));
+      if (!c.projeto) return (alvo.hidden = true);
+      const p = c.projeto;
+      alvo.innerHTML = `${etiqueta(ESTADOS_PROJETO, p.estado)} Orçamento ${esc(dinheiro(p.orcamento, p.moeda))} · ${esc(p.prazo_dias)} dias ·
+        <a href="index.html">${wopPerfil.tipo === "cliente" ? "ver propostas" : "ver a minha proposta"}</a>`;
+      alvo.hidden = false;
     }
 
-    function desenharMensagens(msgs) {
+    function desenharMensagens(forcarFundo = false) {
       const caixa = $("mensagens");
-      const noFundo = caixa.scrollHeight - caixa.scrollTop - caixa.clientHeight < 80;
-      caixa.innerHTML = msgs.map((m) => {
-        const classe = m.autor === "sistema" ? "sistema" : m.autor === wopUser.uid ? "minha" : "outra";
-        const hora = m.hora ? `<time>${esc(horaCurta(m.hora))}</time>` : "";
-        return `<div class="msg ${classe}">${esc(m.texto)}${classe === "sistema" ? "" : hora}</div>`;
+      const noFundo = forcarFundo || caixa.scrollHeight - caixa.scrollTop - caixa.clientHeight < 80;
+      caixa.innerHTML = mensagens.map((m) => {
+        const classe = m.autor_id === null ? "sistema" : m.autor_id === wopUser.id ? "minha" : "outra";
+        const hora = classe === "sistema" ? "" : `<time>${esc(horaCurta(m.criado_em))}</time>`;
+        return `<div class="msg ${classe}">${esc(m.texto)}${hora}</div>`;
       }).join("");
-      if (noFundo || msgs.length < 20) caixa.scrollTop = caixa.scrollHeight;
-      const c = conversas.find((x) => x.id === conversaAtiva);
-      if (c) marcarComoLida(c);
+      if (noFundo) caixa.scrollTop = caixa.scrollHeight;
     }
 
-    const marcadasHaPouco = {};
+    let ultimaMarcacao = 0;
     function marcarComoLida(c) {
-      if (!conversaPorLer(c, wopUser.uid) || document.hidden) return;
-      if (Date.now() - (marcadasHaPouco[c.id] || 0) < 3000) return;
-      marcadasHaPouco[c.id] = Date.now();
-      db.collection("chats").doc(c.id).update({ ["lidoEm." + wopUser.uid]: agora() }).catch(() => {});
+      if (!conversaPorLer(c, wopUser.id) || document.hidden) return;
+      if (Date.now() - ultimaMarcacao < 2000) return;
+      ultimaMarcacao = Date.now();
+      sb.rpc("marcar_conversa_lida", { p_conversa: c.id }).then(atualizarContadorMensagens);
     }
 
     function fecharConversa() {
-      if (pararMensagens) pararMensagens();
-      pararMensagens = null;
+      if (canalMensagens) sb.removeChannel(canalMensagens);
+      canalMensagens = null;
       conversaAtiva = null;
       history.replaceState(null, "", "chat.html");
       $("caixa").classList.remove("com-conversa");
@@ -229,16 +245,23 @@
       }
     });
 
-    $("formMensagem").addEventListener("submit", (ev) => {
+    $("formMensagem").addEventListener("submit", async (ev) => {
       ev.preventDefault();
       const texto = campo.value.trim();
       if (!texto || !conversaAtiva) return;
       campo.value = "";
       campo.style.height = "auto";
-      enviarMensagem(conversaAtiva, texto).catch((e) => {
+      const { data, error } = await sb
+        .from("mensagens")
+        .insert({ conversa_id: conversaAtiva, autor_id: wopUser.id, texto })
+        .select()
+        .single();
+      if (error) {
         campo.value = texto;
-        avisar("A mensagem não foi enviada. " + traduzirErro(e), "erro");
-      });
+        return avisar("A mensagem não foi enviada. " + traduzirErro(error), "erro");
+      }
+      if (!mensagens.some((m) => m.id === data.id)) mensagens.push(data);
+      desenharMensagens(true);
     });
 
     document.addEventListener("visibilitychange", () => {
@@ -248,25 +271,9 @@
 
     /* Arranque */
 
-    exigirSessao((user) => {
-      // Sem orderBy para não depender de índice composto; ordena-se aqui.
-      db.collection("chats").where("participantes", "array-contains", user.uid).onSnapshot(
-        (snap) => {
-          conversas = ordenarPorData(
-            snap.docs.map((d) => ({ id: d.id, ...d.data({ serverTimestamps: "estimate" }) })),
-            "ultimaMensagemHora"
-          );
-          desenharLista();
-          if (conversaAtiva) {
-            if (conversas.some((c) => c.id === conversaAtiva)) abrirConversa(conversaAtiva);
-            else if (!snap.metadata.fromCache) fecharConversa();
-          }
-        },
-        (e) => {
-          console.error("[Work on Pan] conversas:", e);
-          $("listaConversas").innerHTML = `<li class="vazio texto-pequeno">Não foi possível carregar as conversas. ${esc(traduzirErro(e))}</li>`;
-        }
-      );
+    exigirSessao(() => {
+      carregarConversas();
+      aoMudar(["conversas"], carregarConversas);
     });
   </script>
 </body>

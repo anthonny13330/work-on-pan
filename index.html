@@ -155,17 +155,15 @@
         <label for="jeMensagem">Mensagem para o cliente</label>
         <textarea id="jeMensagem" maxlength="3000"></textarea>
       </div>
-      <p class="texto-suave texto-pequeno">O cliente é avisado na conversa de que alteraste a proposta.</p>
+      <p class="texto-suave texto-pequeno">O cliente é avisado na conversa de que alteraste a proposta. Se a tinhas retirado, volta a ficar à espera de resposta.</p>
       <button type="submit" class="botao botao-principal botao-largo">Guardar alterações da proposta</button>
     </form>
   </dialog>
 
   <footer id="rodape" class="rodape"></footer>
 
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="firebase-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
+  <script src="supabase-config.js"></script>
   <script src="app.js"></script>
   <script>
     const opcoes = (mapa, vazio) =>
@@ -175,7 +173,6 @@
     /* ─────────────── Cliente ─────────────── */
 
     let meusProjetos = [];
-    let propostasRecebidas = [];
     let freelancers = [];
 
     function mudarSeparador(nome) {
@@ -190,39 +187,19 @@
       t.addEventListener("click", () => mudarSeparador(t.id.replace("tab-", "")))
     );
 
-    function iniciarCliente(user, conta, perfil) {
+    function iniciarCliente(perfil) {
       $("vistaCliente").hidden = false;
-      $("cOla").textContent = `Olá, ${perfil.nome || "cliente"}`;
+      $("cOla").textContent = `Olá, ${perfil.nome}`;
       $("pubCategoria").innerHTML = opcoes(CATEGORIAS, "Escolhe a área");
       $("pubMoeda").innerHTML = opcoes(MOEDAS);
-      $("pubMoeda").value = conta.moeda || "EUR";
+      $("pubMoeda").value = perfil.moeda || "EUR";
 
       const inicial = location.hash.replace("#", "");
       if (["projetos", "publicar", "freelancers"].includes(inicial)) mudarSeparador(inicial);
 
-      // Sem orderBy: evita o índice composto que fazia os projetos não aparecerem.
-      db.collection("projetos").where("clienteId", "==", user.uid).onSnapshot(
-        (snap) => {
-          meusProjetos = ordenarPorData(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-          desenharMeusProjetos();
-        },
-        (e) => mostrarErroLista("listaMeusProjetos", e)
-      );
-
-      db.collection("propostas").where("clienteId", "==", user.uid).onSnapshot(
-        (snap) => {
-          propostasRecebidas = ordenarPorData(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-          desenharMeusProjetos();
-        },
-        (e) => console.error("[Work on Pan] propostas:", e)
-      );
-
-      db.collection("perfis").where("tipo", "==", "freelancer").get()
-        .then((snap) => {
-          freelancers = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-          desenharFreelancers();
-        })
-        .catch((e) => mostrarErroLista("listaFreelancers", e));
+      carregarMeusProjetos();
+      aoMudar(["projetos", "propostas"], carregarMeusProjetos);
+      carregarFreelancers();
 
       $("pesquisaFreelancers").addEventListener("input", desenharFreelancers);
       $("formPublicar").addEventListener("submit", publicarProjeto);
@@ -233,14 +210,28 @@
       $(id).innerHTML = `<div class="cartao vazio"><p>Não foi possível carregar esta lista. ${esc(traduzirErro(e))}</p></div>`;
     }
 
+    async function carregarMeusProjetos() {
+      const { data, error } = await sb
+        .from("projetos")
+        .select(`*,
+          escolhido:perfis!projetos_freelancer_id_fkey(nome, sobrenome),
+          propostas(*, freelancer:perfis!propostas_freelancer_id_fkey(nome, sobrenome, area, competencias))`)
+        .eq("cliente_id", wopUser.id)
+        .order("criado_em", { ascending: false })
+        .order("criado_em", { referencedTable: "propostas", ascending: false });
+      if (error) return mostrarErroLista("listaMeusProjetos", error);
+      meusProjetos = data;
+      desenharMeusProjetos();
+    }
+
     function desenharMeusProjetos() {
       const conta = (estado) => meusProjetos.filter((p) => p.estado === estado).length;
       $("cAbertos").textContent = conta("aberto");
       $("cAndamento").textContent = conta("em_andamento");
       $("cConcluidos").textContent = conta("concluido");
-      $("cPorResponder").textContent = propostasRecebidas.filter((pp) =>
-        pp.estado === "pendente" && meusProjetos.some((p) => p.id === pp.projetoId && p.estado === "aberto")
-      ).length;
+      $("cPorResponder").textContent = meusProjetos
+        .filter((p) => p.estado === "aberto")
+        .reduce((n, p) => n + p.propostas.filter((pp) => pp.estado === "pendente").length, 0);
 
       const alvo = $("listaMeusProjetos");
       if (!meusProjetos.length) {
@@ -254,8 +245,7 @@
       }
 
       alvo.innerHTML = meusProjetos.map((p) => {
-        const propostas = propostasRecebidas.filter((pp) => pp.projetoId === p.id && pp.estado !== "retirada");
-        const orcamento = p.orcamento ?? p.budget;
+        const propostas = p.propostas.filter((pp) => pp.estado !== "retirada");
         return `
           <article class="cartao">
             <div class="item-topo">
@@ -263,16 +253,15 @@
                 <h3>${esc(p.titulo)}</h3>
                 <ul class="meta">
                   <li>${esc(nomeCategoria(p.categoria))}</li>
-                  <li>${esc(dinheiro(orcamento, p.moeda))}</li>
-                  <li>${esc(p.prazoDias || "?")} dias</li>
-                  <li>publicado ${esc(dataCurta(p.createdAt))}</li>
+                  <li>${esc(dinheiro(p.orcamento, p.moeda))}</li>
+                  <li>${esc(p.prazo_dias)} dias</li>
+                  <li>publicado ${esc(dataCurta(p.criado_em))}</li>
                 </ul>
               </div>
               ${etiqueta(ESTADOS_PROJETO, p.estado)}
             </div>
-            <p class="item-descricao">${esc(p.descricao || p.desc)}</p>
-            ${p.estado === "em_andamento" && p.freelancerNome
-              ? `<p style="margin: 10px 0 0">Freelancer escolhido: <strong>${esc(p.freelancerNome)}</strong></p>` : ""}
+            <p class="item-descricao">${esc(p.descricao)}</p>
+            ${p.escolhido ? `<p style="margin: 10px 0 0">Freelancer escolhido: <strong>${esc(nomeCompleto(p.escolhido))}</strong></p>` : ""}
             <div class="sub-lista">
               <strong>${propostas.length ? `Propostas recebidas (${propostas.length})` : "Ainda sem propostas"}</strong>
               ${propostas.length ? propostas.map((pp) => cartaoPropostaRecebida(p, pp)).join("")
@@ -290,14 +279,15 @@
 
     function cartaoPropostaRecebida(projeto, pp) {
       const podeDecidir = projeto.estado === "aberto" && pp.estado === "pendente";
+      const nome = nomeCompleto(pp.freelancer);
       return `
         <div class="proposta">
           <div class="item-topo">
             <div class="pessoa">
-              <span class="avatar" aria-hidden="true">${esc(iniciais(pp.freelancerNome))}</span>
+              <span class="avatar" aria-hidden="true">${esc(iniciais(nome))}</span>
               <div>
-                <strong>${esc(pp.freelancerNome)}</strong><br>
-                <span class="texto-suave texto-pequeno">${esc(dinheiro(pp.valor, pp.moeda))} · entrega em ${esc(pp.prazoEntrega)} dias · ${esc(dataCurta(pp.createdAt))}</span>
+                <strong>${esc(nome)}</strong>${pp.freelancer?.area ? ` <span class="texto-suave texto-pequeno">· ${esc(nomeCategoria(pp.freelancer.area))}</span>` : ""}<br>
+                <span class="texto-suave texto-pequeno">${esc(dinheiro(pp.valor, pp.moeda))} · entrega em ${esc(pp.prazo_entrega)} dias · ${esc(dataCurta(pp.criado_em))}</span>
               </div>
             </div>
             ${etiqueta(ESTADOS_PROPOSTA, pp.estado)}
@@ -305,9 +295,9 @@
           <blockquote>${esc(pp.mensagem)}</blockquote>
           <div class="acoes">
             ${podeDecidir ? `
-              <button class="botao botao-principal botao-pequeno" onclick="aceitarProposta('${esc(pp.id)}')">Aceitar e começar o projeto</button>
-              <button class="botao botao-perigo botao-pequeno" onclick="recusarProposta('${esc(pp.id)}')">Recusar</button>` : ""}
-            <button class="botao botao-secundario botao-pequeno" onclick="conversarSobre('${esc(pp.id)}')">Conversar com ${esc((pp.freelancerNome || "").split(" ")[0])}</button>
+              <button class="botao botao-principal botao-pequeno" onclick="responderProposta('${esc(pp.id)}', true)">Aceitar e começar o projeto</button>
+              <button class="botao botao-perigo botao-pequeno" onclick="responderProposta('${esc(pp.id)}', false)">Recusar</button>` : ""}
+            <button class="botao botao-secundario botao-pequeno" onclick="irParaConversa('${esc(pp.freelancer_id)}', '${esc(projeto.id)}')">Conversar com ${esc(pp.freelancer?.nome || "o freelancer")}</button>
           </div>
         </div>`;
     }
@@ -329,145 +319,104 @@
       if (p.estado === "fechado")
         return `<button class="botao botao-secundario botao-pequeno" onclick="mudarEstadoProjeto('${id}', 'aberto')">Reabrir a propostas</button>${apagar}`;
       if (p.estado === "em_andamento")
-        return `<button class="botao botao-principal botao-pequeno" onclick="mudarEstadoProjeto('${id}', 'concluido')">Marcar como concluído</button>`;
+        return `<button class="botao botao-secundario botao-pequeno" onclick="irParaConversa('${esc(p.freelancer_id)}', '${id}')">Falar com o freelancer</button>
+          <button class="botao botao-principal botao-pequeno" onclick="mudarEstadoProjeto('${id}', 'concluido')">Marcar como concluído</button>`;
       return apagar;
     }
 
-    function publicarProjeto(ev) {
+    async function publicarProjeto(ev) {
       ev.preventDefault();
       const msg = $("msgPublicar");
       const erro = (t) => { msg.textContent = t; msg.className = "mensagem-form erro"; msg.hidden = false; };
 
       const projeto = {
+        cliente_id: wopUser.id,
         titulo: $("pubTitulo").value.trim(),
         categoria: $("pubCategoria").value,
         descricao: $("pubDescricao").value.trim(),
         orcamento: Number($("pubOrcamento").value),
         moeda: $("pubMoeda").value,
-        prazoDias: Number($("pubPrazo").value),
-        competencias: $("pubCompetencias").value.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 12),
+        prazo_dias: Number($("pubPrazo").value),
+        competencias: listaCompetencias($("pubCompetencias").value, 12),
       };
 
       if (projeto.titulo.length < 5) return erro("Escreve um título com pelo menos 5 caracteres.");
       if (!projeto.categoria) return erro("Escolhe a área do projeto.");
       if (projeto.descricao.length < 30) return erro("A descrição está muito curta — explica um pouco mais (pelo menos 30 caracteres).");
       if (!(projeto.orcamento > 0)) return erro("Indica um orçamento de referência.");
-      if (!(projeto.prazoDias > 0)) return erro("Indica em quantos dias precisas do trabalho.");
+      if (!(projeto.prazo_dias > 0 && projeto.prazo_dias <= 365)) return erro("Indica em quantos dias precisas do trabalho (1 a 365).");
 
       const btn = $("btnPublicar");
       btn.disabled = true;
       btn.textContent = "A publicar…";
+      const { error } = await sb.from("projetos").insert(projeto);
+      btn.disabled = false;
+      btn.textContent = "Publicar projeto";
+      if (error) return erro("Não foi possível publicar. " + traduzirErro(error));
 
-      db.collection("projetos")
-        .add({
-          ...projeto,
-          clienteId: wopUser.uid,
-          clienteNome: wopPerfil.empresa || nomeCompleto(wopPerfil),
-          estado: "aberto",
-          createdAt: agora(),
-          atualizadoEm: agora(),
-        })
-        .then(() => {
-          $("formPublicar").reset();
-          $("pubMoeda").value = projeto.moeda;
-          msg.hidden = true;
-          mudarSeparador("projetos");
-          avisar("Projeto publicado. Já aparece em «Projetos abertos».");
-        })
-        .catch((e) => {
-          console.error("[Work on Pan] publicar:", e);
-          erro("Não foi possível publicar. " + traduzirErro(e));
-        })
-        .finally(() => {
-          btn.disabled = false;
-          btn.textContent = "Publicar projeto";
-        });
+      $("formPublicar").reset();
+      $("pubMoeda").value = projeto.moeda;
+      msg.hidden = true;
+      await carregarMeusProjetos();
+      mudarSeparador("projetos");
+      avisar("Projeto publicado. Já aparece em «Projetos abertos».");
     }
 
-    function mudarEstadoProjeto(id, estado) {
+    async function mudarEstadoProjeto(id, estado) {
       const textos = {
-        fechado: "Fechar este projeto? Deixa de aparecer aos freelancers, mas podes reabri-lo depois.",
+        fechado: "Fechar este projeto? Deixa de aparecer aos freelancers e as propostas pendentes ficam fechadas. Podes reabri-lo depois.",
         concluido: "Marcar como concluído? Confirma só depois de receberes o trabalho final.",
       };
       if (textos[estado] && !confirm(textos[estado])) return;
-      db.collection("projetos").doc(id)
-        .update({ estado, atualizadoEm: agora() })
-        .then(() => avisar({ aberto: "Projeto reaberto.", fechado: "Projeto fechado.", concluido: "Projeto concluído." }[estado]))
-        .catch((e) => avisar(traduzirErro(e), "erro"));
+      const { error } = await sb.from("projetos").update({ estado }).eq("id", id);
+      if (error) return avisar(traduzirErro(error), "erro");
+      await carregarMeusProjetos();
+      avisar({ aberto: "Projeto reaberto.", fechado: "Projeto fechado.", concluido: "Projeto concluído." }[estado]);
     }
 
-    function apagarProjeto(id) {
+    async function apagarProjeto(id) {
       const p = meusProjetos.find((x) => x.id === id);
-      if (!confirm(`Apagar "${p.titulo}" de vez? Os freelancers que enviaram proposta veem-na como «Projeto fechado».`)) return;
-      const lote = db.batch();
-      propostasRecebidas
-        .filter((pp) => pp.projetoId === id && pp.estado === "pendente")
-        .forEach((pp) => lote.update(db.collection("propostas").doc(pp.id), { estado: "fechada", atualizadoEm: agora() }));
-      lote.delete(db.collection("projetos").doc(id));
-      lote.commit()
-        .then(() => avisar("Projeto apagado."))
-        .catch((e) => avisar(traduzirErro(e), "erro"));
+      if (!confirm(`Apagar "${p.titulo}" de vez? As propostas recebidas também são apagadas.`)) return;
+      const { error } = await sb.from("projetos").delete().eq("id", id);
+      if (error) return avisar(traduzirErro(error), "erro");
+      await carregarMeusProjetos();
+      avisar("Projeto apagado.");
     }
 
-    function conversaDaProposta(pp) {
-      const projeto = meusProjetos.find((p) => p.id === pp.projetoId);
-      return garantirConversa({
-        clienteId: wopUser.uid,
-        clienteNome: wopPerfil.empresa || nomeCompleto(wopPerfil),
-        freelancerId: pp.freelancerId,
-        freelancerNome: pp.freelancerNome,
-        projetoId: pp.projetoId,
-        projetoTitulo: projeto?.titulo || pp.projetoTitulo,
-      });
+    async function responderProposta(propostaId, aceitar) {
+      const projeto = meusProjetos.find((p) => p.propostas.some((pp) => pp.id === propostaId));
+      const pp = projeto.propostas.find((x) => x.id === propostaId);
+      const nome = nomeCompleto(pp.freelancer);
+      const outras = projeto.propostas.filter((x) => x.id !== pp.id && x.estado === "pendente").length;
+      const pergunta = aceitar
+        ? `Aceitar a proposta de ${nome} por ${dinheiro(pp.valor, pp.moeda)}?\n\n` +
+          "O projeto passa a «Em andamento» e deixa de receber propostas." +
+          (outras ? `\nAs outras ${outras} proposta(s) ficam fechadas.` : "")
+        : `Recusar a proposta de ${nome}? A pessoa vê a proposta como recusada.`;
+      if (!confirm(pergunta)) return;
+
+      const { error } = await sb.rpc("responder_proposta", { p_proposta: propostaId, p_aceitar: aceitar });
+      if (error) return avisar(traduzirErro(error), "erro");
+      await carregarMeusProjetos();
+      avisar(aceitar ? `Proposta de ${nome} aceite. Já podem falar em Mensagens.` : "Proposta recusada.");
     }
 
-    function conversarSobre(propostaId) {
-      const pp = propostasRecebidas.find((x) => x.id === propostaId);
-      conversaDaProposta(pp)
-        .then((chatId) => (location.href = "chat.html?c=" + encodeURIComponent(chatId)))
-        .catch((e) => avisar(traduzirErro(e), "erro"));
-    }
-
-    function aceitarProposta(propostaId) {
-      const pp = propostasRecebidas.find((x) => x.id === propostaId);
-      const outras = propostasRecebidas.filter((x) => x.projetoId === pp.projetoId && x.id !== pp.id && x.estado === "pendente");
-      const aviso = `Aceitar a proposta de ${pp.freelancerNome} por ${dinheiro(pp.valor, pp.moeda)}?\n\n` +
-        "O projeto passa a «Em andamento» e deixa de receber propostas." +
-        (outras.length ? `\nAs outras ${outras.length} proposta(s) ficam marcadas como fechadas.` : "");
-      if (!confirm(aviso)) return;
-
-      const lote = db.batch();
-      lote.update(db.collection("propostas").doc(pp.id), { estado: "aceite", atualizadoEm: agora() });
-      outras.forEach((x) => lote.update(db.collection("propostas").doc(x.id), { estado: "fechada", atualizadoEm: agora() }));
-      lote.update(db.collection("projetos").doc(pp.projetoId), {
-        estado: "em_andamento",
-        freelancerId: pp.freelancerId,
-        freelancerNome: pp.freelancerNome,
-        propostaAceiteId: pp.id,
-        atualizadoEm: agora(),
-      });
-
-      lote.commit()
-        .then(() => conversaDaProposta(pp))
-        .then((chatId) => enviarMensagem(chatId,
-          `Proposta aceite (${dinheiro(pp.valor, pp.moeda)}, ${pp.prazoEntrega} dias). Combinem aqui os próximos passos.`, "sistema"))
-        .then(() => avisar(`Proposta de ${pp.freelancerNome} aceite.`))
-        .catch((e) => avisar(traduzirErro(e), "erro"));
-    }
-
-    function recusarProposta(propostaId) {
-      const pp = propostasRecebidas.find((x) => x.id === propostaId);
-      if (!confirm(`Recusar a proposta de ${pp.freelancerNome}? A pessoa vê a proposta como recusada.`)) return;
-      db.collection("propostas").doc(pp.id)
-        .update({ estado: "recusada", atualizadoEm: agora() })
-        .then(() => avisar("Proposta recusada."))
-        .catch((e) => avisar(traduzirErro(e), "erro"));
+    async function carregarFreelancers() {
+      const { data, error } = await sb
+        .from("perfis")
+        .select("id, nome, sobrenome, area, bio, valor_hora, moeda, competencias, disponivel")
+        .eq("tipo", "freelancer")
+        .order("disponivel", { ascending: false })
+        .order("atualizado_em", { ascending: false });
+      if (error) return mostrarErroLista("listaFreelancers", error);
+      freelancers = data;
+      desenharFreelancers();
     }
 
     function desenharFreelancers() {
       const termo = $("pesquisaFreelancers").value.trim().toLowerCase();
       const lista = freelancers.filter((f) =>
-        !termo || [nomeCompleto(f), nomeCategoria(f.area), f.bio, ...(f.competencias || [])].join(" ").toLowerCase().includes(termo)
+        !termo || [nomeCompleto(f), nomeCategoria(f.area), f.bio, ...f.competencias].join(" ").toLowerCase().includes(termo)
       );
       if (!freelancers.length) {
         $("listaFreelancers").innerHTML = `<div class="cartao vazio" style="grid-column: 1 / -1">
@@ -488,27 +437,15 @@
                 <span class="texto-suave texto-pequeno">${esc(f.area ? nomeCategoria(f.area) : "Área não indicada")}</span>
               </div>
             </div>
-            ${f.valorHora ? `<span class="valor">${esc(dinheiro(f.valorHora, f.moeda))}<span class="texto-suave texto-pequeno">/hora</span></span>` : ""}
+            ${f.valor_hora ? `<span class="valor">${esc(dinheiro(f.valor_hora, f.moeda))}<span class="texto-suave texto-pequeno">/hora</span></span>` : ""}
           </div>
           <p class="item-descricao">${esc(f.bio || "Ainda sem apresentação.")}</p>
-          ${(f.competencias || []).length ? `<ul class="competencias">${f.competencias.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>` : ""}
+          ${f.competencias.length ? `<ul class="competencias">${f.competencias.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>` : ""}
           <div class="item-rodape">
-            <span class="texto-pequeno ${f.disponivel === false ? "texto-suave" : ""}">${f.disponivel === false ? "Sem disponibilidade de momento" : "Disponível para novos projetos"}</span>
-            <button class="botao botao-secundario botao-pequeno" onclick="contactarFreelancer('${esc(f.id)}')">Enviar mensagem</button>
+            <span class="texto-pequeno ${f.disponivel ? "" : "texto-suave"}">${f.disponivel ? "Disponível para novos projetos" : "Sem disponibilidade de momento"}</span>
+            <button class="botao botao-secundario botao-pequeno" onclick="irParaConversa('${esc(f.id)}')">Enviar mensagem</button>
           </div>
         </article>`).join("");
-    }
-
-    function contactarFreelancer(id) {
-      const f = freelancers.find((x) => x.id === id);
-      garantirConversa({
-        clienteId: wopUser.uid,
-        clienteNome: wopPerfil.empresa || nomeCompleto(wopPerfil),
-        freelancerId: f.id,
-        freelancerNome: nomeCompleto(f),
-      })
-        .then((chatId) => (location.href = "chat.html?c=" + encodeURIComponent(chatId)))
-        .catch((e) => avisar(traduzirErro(e), "erro"));
     }
 
     /* ─────────────── Freelancer ─────────────── */
@@ -516,25 +453,32 @@
     let minhasPropostas = [];
     let propostaEmEdicao = null;
 
-    function iniciarFreelancer(user, conta, perfil) {
+    function iniciarFreelancer(perfil) {
       $("vistaFreelancer").hidden = false;
-      $("fOla").textContent = `Olá, ${perfil.nome || "freelancer"}`;
-      $("avisoPerfil").hidden = Boolean(perfil.area && perfil.bio && (perfil.competencias || []).length);
+      $("fOla").textContent = `Olá, ${perfil.nome}`;
+      $("avisoPerfil").hidden = Boolean(perfil.area && perfil.bio && perfil.competencias.length);
 
-      db.collection("propostas").where("freelancerId", "==", user.uid).onSnapshot(
-        (snap) => {
-          minhasPropostas = ordenarPorData(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-          desenharPropostas();
-        },
-        (e) => mostrarErroLista("listaPropostas", e)
-      );
-
-      db.collection("projetos").where("estado", "==", "aberto").onSnapshot(
-        (snap) => ($("fAbertos").textContent = snap.size),
-        (e) => console.error("[Work on Pan] projetos:", e)
-      );
-
+      carregarPropostas();
+      contarProjetosAbertos();
+      aoMudar(["propostas"], carregarPropostas, `freelancer_id=eq.${wopUser.id}`);
+      aoMudar(["projetos"], contarProjetosAbertos);
       $("formEditar").addEventListener("submit", guardarEdicao);
+    }
+
+    async function carregarPropostas() {
+      const { data, error } = await sb
+        .from("propostas")
+        .select("*, projeto:projetos(id, titulo, estado, cliente_id, cliente:perfis!projetos_cliente_id_fkey(nome, sobrenome, empresa))")
+        .eq("freelancer_id", wopUser.id)
+        .order("atualizado_em", { ascending: false });
+      if (error) return mostrarErroLista("listaPropostas", error);
+      minhasPropostas = data;
+      desenharPropostas();
+    }
+
+    async function contarProjetosAbertos() {
+      const { count } = await sb.from("projetos").select("id", { count: "exact", head: true }).eq("estado", "aberto");
+      $("fAbertos").textContent = count ?? "–";
     }
 
     function desenharPropostas() {
@@ -560,17 +504,19 @@
           aceite: "O cliente escolheu-te. Combinem os detalhes em Mensagens.",
           recusada: "O cliente escolheu não avançar com esta proposta.",
           fechada: "O projeto foi fechado ou entregue a outra pessoa.",
-          retirada: "Retiraste esta proposta. Podes voltar a enviá-la a partir do projeto, se ainda estiver aberto.",
+          retirada: "Retiraste esta proposta. Se o projeto ainda estiver aberto, podes voltar a enviá-la.",
         }[pp.estado] || "";
+        const podeReenviar = pp.estado === "retirada" && pp.projeto.estado === "aberto";
         return `
           <article class="cartao">
             <div class="item-topo">
               <div>
-                <h3>${esc(pp.projetoTitulo || "Projeto")}</h3>
+                <h3>${esc(pp.projeto.titulo)}</h3>
                 <ul class="meta">
+                  <li>Cliente: ${esc(nomeCliente(pp.projeto.cliente))}</li>
                   <li>${esc(dinheiro(pp.valor, pp.moeda))}</li>
-                  <li>entrega em ${esc(pp.prazoEntrega)} dias</li>
-                  <li>enviada ${esc(dataCurta(pp.createdAt))}</li>
+                  <li>entrega em ${esc(pp.prazo_entrega)} dias</li>
+                  <li>enviada ${esc(dataCurta(pp.criado_em))}</li>
                 </ul>
               </div>
               ${etiqueta(ESTADOS_PROPOSTA, pp.estado)}
@@ -579,9 +525,10 @@
             <div class="item-rodape">
               <span class="texto-suave texto-pequeno">${esc(nota)}</span>
               <div class="acoes">
-                ${pp.chatId ? `<a class="botao botao-secundario botao-pequeno" href="chat.html?c=${encodeURIComponent(pp.chatId)}">Falar com o cliente</a>` : ""}
+                <button class="botao botao-secundario botao-pequeno" onclick="irParaConversa('${esc(pp.projeto.cliente_id)}', '${esc(pp.projeto_id)}')">Falar com o cliente</button>
+                ${pp.estado === "pendente" || podeReenviar ? `
+                  <button class="botao botao-secundario botao-pequeno" onclick="editarProposta('${id}')">${podeReenviar ? "Voltar a enviar" : "Editar proposta"}</button>` : ""}
                 ${pp.estado === "pendente" ? `
-                  <button class="botao botao-secundario botao-pequeno" onclick="editarProposta('${id}')">Editar proposta</button>
                   <button class="botao botao-perigo botao-pequeno" onclick="retirarProposta('${id}')">Retirar</button>` : ""}
               </div>
             </div>
@@ -591,52 +538,50 @@
 
     function editarProposta(id) {
       propostaEmEdicao = minhasPropostas.find((p) => p.id === id);
-      $("jeProjeto").textContent = propostaEmEdicao.projetoTitulo;
+      $("jeProjeto").textContent = propostaEmEdicao.projeto.titulo;
       $("jeValor").value = propostaEmEdicao.valor;
-      $("jePrazo").value = propostaEmEdicao.prazoEntrega;
+      $("jePrazo").value = propostaEmEdicao.prazo_entrega;
       $("jeMensagem").value = propostaEmEdicao.mensagem;
       $("msgEditar").hidden = true;
       $("janelaEditar").showModal();
     }
 
-    function guardarEdicao(ev) {
+    async function guardarEdicao(ev) {
       ev.preventDefault();
       const pp = propostaEmEdicao;
       const valor = Number($("jeValor").value);
       const prazo = Number($("jePrazo").value);
       const mensagem = $("jeMensagem").value.trim();
       const erro = (t) => { $("msgEditar").textContent = t; $("msgEditar").hidden = false; };
-      if (!(valor > 0) || !(prazo > 0)) return erro("Valor e prazo têm de ser maiores que zero.");
+      if (!(valor > 0) || !(prazo > 0 && prazo <= 365)) return erro("Valor e prazo têm de ser maiores que zero (prazo até 365 dias).");
       if (mensagem.length < 20) return erro("A mensagem precisa de pelo menos 20 caracteres.");
 
-      db.collection("propostas").doc(pp.id)
-        .update({ valor, prazoEntrega: prazo, mensagem, atualizadoEm: agora() })
-        .then(() => pp.chatId && enviarMensagem(pp.chatId,
-          `Atualizei a proposta: ${dinheiro(valor, pp.moeda)}, entrega em ${prazo} dias.`))
-        .then(() => {
-          $("janelaEditar").close();
-          avisar("Proposta atualizada.");
-        })
-        .catch((e) => erro(traduzirErro(e)));
+      const { error } = await sb.rpc("enviar_proposta", {
+        p_projeto: pp.projeto_id, p_valor: valor, p_moeda: pp.moeda, p_prazo: prazo, p_mensagem: mensagem,
+      });
+      if (error) return erro(traduzirErro(error));
+      $("janelaEditar").close();
+      await carregarPropostas();
+      avisar("Proposta atualizada. O cliente foi avisado na conversa.");
     }
 
-    function retirarProposta(id) {
+    async function retirarProposta(id) {
       const pp = minhasPropostas.find((p) => p.id === id);
-      if (!confirm(`Retirar a proposta para "${pp.projetoTitulo}"? O cliente deixa de a poder aceitar.`)) return;
-      db.collection("propostas").doc(id)
-        .update({ estado: "retirada", atualizadoEm: agora() })
-        .then(() => pp.chatId && enviarMensagem(pp.chatId, "Retirei a minha proposta para este projeto."))
-        .then(() => avisar("Proposta retirada."))
-        .catch((e) => avisar(traduzirErro(e), "erro"));
+      if (!confirm(`Retirar a proposta para "${pp.projeto.titulo}"? O cliente deixa de a poder aceitar.`)) return;
+      const { error } = await sb.rpc("retirar_proposta", { p_proposta: id });
+      if (error) return avisar(traduzirErro(error), "erro");
+      await carregarPropostas();
+      avisar("Proposta retirada.");
     }
 
     /* ─────────────── Arranque ─────────────── */
 
-    exigirSessao((user, conta, perfil) => {
+    exigirSessao((user, perfil) => {
       $("aCarregar").remove();
-      document.title = (conta.tipo === "cliente" ? "Os meus projetos" : "As minhas propostas") + " · Work on Pan";
-      if (conta.tipo === "cliente") iniciarCliente(user, conta, perfil);
-      else iniciarFreelancer(user, conta, perfil);
+      const cliente = perfil.tipo === "cliente";
+      document.title = (cliente ? "Os meus projetos" : "As minhas propostas") + " · Work on Pan";
+      if (cliente) iniciarCliente(perfil);
+      else iniciarFreelancer(perfil);
     });
   </script>
 </body>

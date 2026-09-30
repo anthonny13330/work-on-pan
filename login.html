@@ -50,10 +50,8 @@
 
   <footer id="rodape" class="rodape"></footer>
 
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="firebase-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
+  <script src="supabase-config.js"></script>
   <script src="app.js"></script>
   <script>
     const destino = (() => {
@@ -69,33 +67,35 @@
       m.hidden = false;
     }
 
-    $("formEntrar").addEventListener("submit", (ev) => {
+    $("formEntrar").addEventListener("submit", async (ev) => {
       ev.preventDefault();
       const email = $("email").value.trim();
-      const senha = $("senha").value;
-      if (!email || !senha) return mostrar("Escreve o e-mail e a palavra-passe.");
+      const password = $("senha").value;
+      if (!email || !password) return mostrar("Escreve o e-mail e a palavra-passe.");
 
       const btn = $("btnEntrar");
       btn.disabled = true;
       btn.textContent = "A entrar…";
-      auth
-        .signInWithEmailAndPassword(email, senha)
-        .then(() => (location.href = destino))
-        .catch((e) => {
-          mostrar(traduzirErro(e));
-          btn.disabled = false;
-          btn.textContent = "Entrar na minha conta";
-        });
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      if (!error) return (location.href = destino);
+      mostrar(traduzirErro(error));
+      btn.disabled = false;
+      btn.textContent = "Entrar na minha conta";
     });
 
-    $("btnRecuperar").addEventListener("click", () => {
+    $("btnRecuperar").addEventListener("click", async () => {
       const email = $("email").value.trim();
       if (!email) return mostrar("Escreve primeiro o teu e-mail no campo acima.");
-      auth
-        .sendPasswordResetEmail(email)
-        .then(() => mostrar(`Se existir uma conta com ${email}, vais receber um e-mail com o link para criar uma nova palavra-passe.`, "ok"))
-        .catch((e) => mostrar(traduzirErro(e)));
+      const { error } = await sb.auth.resetPasswordForEmail(email, {
+        redirectTo: new URL("definicoes.html?recuperar=1", location.href).href,
+      });
+      if (error) return mostrar(traduzirErro(error));
+      mostrar(`Se existir uma conta com ${email}, vais receber um e-mail com o link para criar uma nova palavra-passe.`, "ok");
     });
+
+    if (new URLSearchParams(location.search).get("confirmado")) {
+      mostrar("E-mail confirmado. Já podes entrar.", "ok");
+    }
 
     sessaoOpcional((user) => {
       if (user) location.href = destino;

@@ -71,14 +71,12 @@
 
   <footer id="rodape" class="rodape"></footer>
 
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="firebase-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
+  <script src="supabase-config.js"></script>
   <script src="app.js"></script>
   <script>
     let projetos = [];
-    let minhasPropostas = {}; // projetoId → proposta (só para freelancers com sessão)
+    let minhasPropostas = {}; // projeto_id → proposta (só para freelancers com sessão)
     let projetoAberto = null;
 
     $("filtroCategoria").innerHTML =
@@ -92,42 +90,38 @@
       $(id).addEventListener("input", desenhar)
     );
 
-    function orcamentoDe(p) {
-      return p.orcamento ?? p.budget ?? null;
-    }
+    const souFreelancer = () => wopPerfil?.tipo === "freelancer";
 
     function desenhar() {
       const termo = $("pesquisa").value.trim().toLowerCase();
       const cat = $("filtroCategoria").value;
       const [min, max] = ($("filtroOrcamento").value || "-").split("-").map((n) => (n ? Number(n) : null));
 
-      let lista = projetos.filter((p) => {
-        const texto = [p.titulo, p.descricao, ...(p.competencias || [])].join(" ").toLowerCase();
-        const valor = orcamentoDe(p) ?? 0;
+      const lista = projetos.filter((p) => {
+        const texto = [p.titulo, p.descricao, ...p.competencias].join(" ").toLowerCase();
         return (
           (!termo || texto.includes(termo)) &&
           (!cat || p.categoria === cat) &&
-          (min === null || valor >= min) &&
-          (max === null || valor <= max)
+          (min === null || p.orcamento >= min) &&
+          (max === null || p.orcamento <= max)
         );
       });
 
       const ordem = $("ordem").value;
-      if (ordem === "maior") lista.sort((a, b) => (orcamentoDe(b) || 0) - (orcamentoDe(a) || 0));
-      else if (ordem === "prazo") lista.sort((a, b) => (a.prazoDias || 999) - (b.prazoDias || 999));
-      else ordenarPorData(lista);
+      if (ordem === "maior") lista.sort((a, b) => b.orcamento - a.orcamento);
+      else if (ordem === "prazo") lista.sort((a, b) => a.prazo_dias - b.prazo_dias);
+      // "recentes" já vem ordenado da base de dados
 
-      $("contagem").textContent = projetos.length
-        ? `${lista.length} de ${projetos.length} projeto${projetos.length === 1 ? "" : "s"} aberto${projetos.length === 1 ? "" : "s"}`
-        : "";
+      const n = projetos.length;
+      $("contagem").textContent = n ? `${lista.length} de ${n} projeto${n === 1 ? "" : "s"} aberto${n === 1 ? "" : "s"}` : "";
 
-      if (!projetos.length) {
+      if (!n) {
         $("listaProjetos").innerHTML = `
           <div class="cartao vazio" style="grid-column: 1 / -1">
             <h2>Ainda não há projetos abertos</h2>
             <p>Quando um cliente publicar um trabalho, aparece aqui. Se precisas de alguém para um trabalho,
               podes ser o primeiro a publicar.</p>
-            <a class="botao botao-principal" href="${wopConta?.tipo === "cliente" ? "index.html#publicar" : "cadastro.html?tipo=cliente"}">Publicar um projeto</a>
+            <a class="botao botao-principal" href="${wopPerfil?.tipo === "cliente" ? "index.html#publicar" : "cadastro.html?tipo=cliente"}">Publicar um projeto</a>
           </div>`;
         return;
       }
@@ -144,7 +138,7 @@
         const minha = minhasPropostas[p.id];
         const botao = minha && minha.estado !== "retirada"
           ? `<span class="etiqueta etiqueta-ok">Já enviaste proposta</span>`
-          : `<button class="botao botao-secundario botao-pequeno" onclick="abrirProjeto('${esc(p.id)}')">Ver detalhes${wopConta?.tipo === "freelancer" ? " e propor" : ""}</button>`;
+          : `<button class="botao botao-secundario botao-pequeno" onclick="abrirProjeto('${esc(p.id)}')">Ver detalhes${souFreelancer() ? " e propor" : ""}</button>`;
         return `
           <article class="cartao">
             <div class="item-topo">
@@ -152,14 +146,14 @@
                 <p class="texto-suave texto-pequeno" style="margin: 0 0 2px">${esc(nomeCategoria(p.categoria))}</p>
                 <h3><a href="#" onclick="abrirProjeto('${esc(p.id)}'); return false" style="color: inherit; text-decoration: none">${esc(p.titulo)}</a></h3>
               </div>
-              <span class="valor">${esc(dinheiro(orcamentoDe(p), p.moeda))}</span>
+              <span class="valor">${esc(dinheiro(p.orcamento, p.moeda))}</span>
             </div>
-            <p class="item-descricao">${esc(p.descricao || p.desc)}</p>
-            ${(p.competencias || []).length ? `<ul class="competencias">${p.competencias.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>` : ""}
+            <p class="item-descricao">${esc(p.descricao)}</p>
+            ${p.competencias.length ? `<ul class="competencias">${p.competencias.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>` : ""}
             <div class="item-rodape">
               <ul class="meta" style="margin: 0">
-                <li>Entrega em ${esc(p.prazoDias || "?")} dias</li>
-                <li>Publicado ${esc(dataCurta(p.createdAt))} por ${esc(p.clienteNome || "cliente")}</li>
+                <li>Entrega em ${esc(p.prazo_dias)} dias</li>
+                <li>Publicado ${esc(dataCurta(p.criado_em))} por ${esc(nomeCliente(p.cliente))}</li>
               </ul>
               ${botao}
             </div>
@@ -180,13 +174,13 @@
       projetoAberto = p;
       $("jpCategoria").textContent = nomeCategoria(p.categoria);
       $("jpTitulo").textContent = p.titulo;
-      $("jpDescricao").textContent = p.descricao || p.desc || "";
+      $("jpDescricao").textContent = p.descricao;
       $("jpMeta").innerHTML = `
-        <li><strong>${esc(dinheiro(orcamentoDe(p), p.moeda))}</strong> de orçamento</li>
-        <li>Entrega em ${esc(p.prazoDias || "?")} dias</li>
-        <li>Cliente: ${esc(p.clienteNome || "—")}</li>
-        <li>Publicado ${esc(dataCurta(p.createdAt))}</li>`;
-      $("jpCompetencias").innerHTML = (p.competencias || []).map((c) => `<li>${esc(c)}</li>`).join("");
+        <li><strong>${esc(dinheiro(p.orcamento, p.moeda))}</strong> de orçamento</li>
+        <li>Entrega em ${esc(p.prazo_dias)} dias</li>
+        <li>Cliente: ${esc(nomeCliente(p.cliente))}</li>
+        <li>Publicado ${esc(dataCurta(p.criado_em))}</li>`;
+      $("jpCompetencias").innerHTML = p.competencias.map((c) => `<li>${esc(c)}</li>`).join("");
       desenharAcao();
       $("janelaProjeto").showModal();
     }
@@ -196,7 +190,7 @@
       const p = projetoAberto;
       const alvo = $("jpAcao");
 
-      if (!wopConta) {
+      if (!wopPerfil) {
         alvo.innerHTML = `
           <p>Para enviar uma proposta precisas de uma conta de freelancer.</p>
           <div class="acoes">
@@ -205,8 +199,8 @@
           </div>`;
         return;
       }
-      if (wopConta.tipo === "cliente") {
-        alvo.innerHTML = p.clienteId === wopUser.uid
+      if (wopPerfil.tipo === "cliente") {
+        alvo.innerHTML = p.cliente_id === wopUser.id
           ? `<p>Este projeto é teu. As propostas que receberes aparecem em <a href="index.html">Os meus projetos</a>.</p>`
           : `<p class="texto-suave">Estás com uma conta de cliente, por isso só podes ver este projeto. Só contas de freelancer enviam propostas.</p>`;
         return;
@@ -219,7 +213,7 @@
             Estado: ${etiqueta(ESTADOS_PROPOSTA, minha.estado)}</p>
           <div class="acoes">
             <a class="botao botao-secundario" href="index.html">Ver as minhas propostas</a>
-            ${minha.chatId ? `<a class="botao botao-secundario" href="chat.html?c=${encodeURIComponent(minha.chatId)}">Falar com o cliente</a>` : ""}
+            <button class="botao botao-secundario" onclick="irParaConversa('${esc(p.cliente_id)}', '${esc(p.id)}')">Falar com o cliente</button>
           </div>`;
         return;
       }
@@ -237,13 +231,13 @@
             </div>
             <div class="campo">
               <label for="ppMoeda">Moeda</label>
-              <select id="ppMoeda">${Object.entries(MOEDAS).map(([k, v]) => `<option value="${k}" ${k === (p.moeda || "EUR") ? "selected" : ""}>${esc(v)}</option>`).join("")}</select>
+              <select id="ppMoeda">${Object.entries(MOEDAS).map(([k, v]) => `<option value="${k}" ${k === p.moeda ? "selected" : ""}>${esc(v)}</option>`).join("")}</select>
             </div>
           </div>
           <div class="campo">
             <label for="ppPrazo">Em quantos dias entregas?</label>
-            <input type="number" id="ppPrazo" min="1" step="1" inputmode="numeric" required>
-            <span class="ajuda">O cliente pediu ${esc(p.prazoDias || "?")} dias.</span>
+            <input type="number" id="ppPrazo" min="1" max="365" step="1" inputmode="numeric" required>
+            <span class="ajuda">O cliente pediu ${esc(p.prazo_dias)} dias.</span>
           </div>
           <div class="campo">
             <label for="ppMensagem">Mensagem para o cliente</label>
@@ -255,7 +249,7 @@
       $("formProposta").addEventListener("submit", enviarProposta);
     }
 
-    function enviarProposta(ev) {
+    async function enviarProposta(ev) {
       ev.preventDefault();
       const p = projetoAberto;
       const valor = Number($("ppValor").value);
@@ -263,91 +257,58 @@
       const mensagem = $("ppMensagem").value.trim();
       const erro = (t) => { $("msgProposta").textContent = t; $("msgProposta").hidden = false; };
 
-      if (!valor || valor <= 0) return erro("Indica o valor da proposta.");
-      if (!prazo || prazo <= 0) return erro("Indica em quantos dias entregas.");
+      if (!(valor > 0)) return erro("Indica o valor da proposta.");
+      if (!(prazo > 0 && prazo <= 365)) return erro("Indica em quantos dias entregas (1 a 365).");
       if (mensagem.length < 20) return erro("Escreve uma mensagem um pouco maior (pelo menos 20 caracteres) — é o que convence o cliente.");
 
       const btn = $("btnProposta");
       btn.disabled = true;
       btn.textContent = "A enviar…";
 
-      const freelancerNome = nomeCompleto(wopPerfil);
-      const propostaId = `${p.id}_${wopUser.uid}`;
-      const moeda = $("ppMoeda").value;
-      const anterior = minhasPropostas[p.id]; // proposta retirada que volta a ser enviada
-
-      const chatId = `p_${p.id}_${wopUser.uid}`; // o mesmo id que garantirConversa usa
-      const dados = { valor, moeda, prazoEntrega: prazo, mensagem, estado: "pendente", atualizadoEm: agora() };
-      const ref = db.collection("propostas").doc(propostaId);
-      const gravar = anterior
-        ? ref.update(dados)
-        : ref.set({
-            ...dados,
-            projetoId: p.id,
-            projetoTitulo: p.titulo,
-            clienteId: p.clienteId,
-            freelancerId: wopUser.uid,
-            freelancerNome,
-            chatId,
-            createdAt: agora(),
-          });
-
-      gravar
-        .then(() => garantirConversa({
-          clienteId: p.clienteId,
-          clienteNome: p.clienteNome,
-          freelancerId: wopUser.uid,
-          freelancerNome,
-          projetoId: p.id,
-          projetoTitulo: p.titulo,
-        }))
-        .then(() => enviarMensagem(chatId,
-          `${anterior ? "Voltei a enviar a proposta" : "Proposta"}: ${dinheiro(valor, moeda)}, entrega em ${prazo} dias.\n\n${mensagem}`))
-        .then(() => {
-          minhasPropostas[p.id] = { id: propostaId, valor, moeda, estado: "pendente", chatId };
-          desenharAcao();
-          desenhar();
-          avisar("Proposta enviada. O cliente já a pode ver.");
-        })
-        .catch((e) => {
-          console.error("[Work on Pan] proposta:", e);
-          erro(e.code === "permission-denied"
-            ? "Não foi possível enviar: o projeto pode já não estar a receber propostas."
-            : traduzirErro(e));
-          btn.disabled = false;
-          btn.textContent = "Enviar proposta ao cliente";
-        });
+      const { error } = await sb.rpc("enviar_proposta", {
+        p_projeto: p.id, p_valor: valor, p_moeda: $("ppMoeda").value, p_prazo: prazo, p_mensagem: mensagem,
+      });
+      if (error) {
+        erro(traduzirErro(error));
+        btn.disabled = false;
+        btn.textContent = "Enviar proposta ao cliente";
+        return;
+      }
+      await carregarMinhasPropostas();
+      desenharAcao();
+      avisar("Proposta enviada. O cliente já a pode ver.");
     }
 
-    sessaoOpcional((user, conta) => {
-      if (conta?.tipo === "cliente") {
+    async function carregarProjetos() {
+      const { data, error } = await sb
+        .from("projetos")
+        .select("*, cliente:perfis!projetos_cliente_id_fkey(nome, sobrenome, empresa)")
+        .eq("estado", "aberto")
+        .order("criado_em", { ascending: false });
+      if (error) {
+        console.error("[Work on Pan] projetos:", error);
+        $("contagem").textContent = "Não foi possível carregar os projetos. Recarrega a página.";
+        return;
+      }
+      projetos = data;
+      desenhar();
+    }
+
+    async function carregarMinhasPropostas() {
+      if (!souFreelancer()) return;
+      const { data } = await sb.from("propostas").select("projeto_id, estado, valor, moeda").eq("freelancer_id", wopUser.id);
+      minhasPropostas = Object.fromEntries((data || []).map((pp) => [pp.projeto_id, pp]));
+      desenhar();
+    }
+
+    sessaoOpcional(async (user, perfil) => {
+      if (perfil?.tipo === "cliente") {
         $("introducao").textContent =
           "É isto que os freelancers veem. Os teus projetos e as propostas recebidas estão em «Os meus projetos».";
       }
-
-      // Sem orderBy para não precisar de índice composto; a ordenação faz-se aqui.
-      db.collection("projetos")
-        .where("estado", "==", "aberto")
-        .onSnapshot(
-          (snap) => {
-            projetos = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-            desenhar();
-          },
-          (e) => {
-            console.error("[Work on Pan] projetos:", e);
-            $("contagem").textContent = "Não foi possível carregar os projetos. Recarrega a página.";
-          }
-        );
-
-      if (conta?.tipo === "freelancer") {
-        db.collection("propostas")
-          .where("freelancerId", "==", user.uid)
-          .onSnapshot((snap) => {
-            minhasPropostas = {};
-            snap.docs.forEach((d) => (minhasPropostas[d.data().projetoId] = { id: d.id, ...d.data() }));
-            desenhar();
-          });
-      }
+      await carregarProjetos();
+      await carregarMinhasPropostas();
+      aoMudar(["projetos"], carregarProjetos);
     });
   </script>
 </body>

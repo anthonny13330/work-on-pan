@@ -167,10 +167,8 @@
 
   <footer id="rodape" class="rodape"></footer>
 
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="firebase-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
+  <script src="supabase-config.js"></script>
   <script src="app.js"></script>
   <script>
     $("area").innerHTML = '<option value="">Escolhe</option>' +
@@ -183,8 +181,15 @@
       avisar("Tema alterado.");
     });
 
-    exigirSessao((user, conta, perfil) => {
-      const freelancer = conta.tipo === "freelancer";
+    // Veio do link «esqueci-me da palavra-passe»: não se pede a atual.
+    const recuperacao = new URLSearchParams(location.search).has("recuperar");
+    if (recuperacao) {
+      $("senhaAtual").closest(".campo").hidden = true;
+      $("seguranca").querySelector("h2").textContent = "Escolhe uma nova palavra-passe";
+    }
+
+    exigirSessao(async (user, perfil) => {
+      const freelancer = perfil.tipo === "freelancer";
       $("tipoConta").textContent = freelancer ? "freelancer" : "cliente";
       $("emailConta").textContent = user.email;
       $("perfilExplicacao").textContent = freelancer
@@ -192,81 +197,82 @@
         : "É o que os freelancers veem nos teus projetos e nas conversas.";
       $("perfilFreelancer").hidden = !freelancer;
       $("perfilCliente").hidden = freelancer;
-      $("textoApagar").textContent = freelancer
-        ? "Apaga o teu perfil público e a conta de acesso. As propostas pendentes são retiradas. As mensagens que já enviaste (e o teu nome nessas conversas) continuam visíveis para a outra pessoa, porque também fazem parte do histórico dela — se quiseres que sejam apagadas, pede-nos pelo contacto no rodapé."
-        : "Apaga o teu perfil público, a conta de acesso e todos os teus projetos (as propostas pendentes ficam fechadas). As mensagens que já enviaste (e o teu nome nessas conversas) continuam visíveis para a outra pessoa, porque também fazem parte do histórico dela — se quiseres que sejam apagadas, pede-nos pelo contacto no rodapé.";
+      $("textoApagar").textContent = (freelancer
+        ? "Apaga o teu perfil, as tuas propostas e todas as tuas conversas."
+        : "Apaga o teu perfil, todos os teus projetos (com as propostas recebidas) e todas as tuas conversas.")
+        + " As conversas desaparecem também para a outra pessoa. Não é possível desfazer.";
 
-      $("nome").value = perfil.nome || "";
-      $("sobrenome").value = perfil.sobrenome || "";
+      $("nome").value = perfil.nome;
+      $("sobrenome").value = perfil.sobrenome;
       $("area").value = perfil.area || "";
-      $("bio").value = perfil.bio || "";
-      $("valorHora").value = perfil.valorHora ?? "";
-      $("moeda").value = perfil.moeda || "EUR";
-      $("competencias").value = (perfil.competencias || []).join(", ");
-      $("disponivel").checked = perfil.disponivel !== false;
-      $("empresa").value = perfil.empresa || "";
-      $("segmento").value = perfil.segmento || "";
+      $("bio").value = perfil.bio;
+      $("valorHora").value = perfil.valor_hora ?? "";
+      $("moeda").value = perfil.moeda;
+      $("competencias").value = perfil.competencias.join(", ");
+      $("disponivel").checked = perfil.disponivel;
+      $("empresa").value = perfil.empresa;
+      $("segmento").value = perfil.segmento;
       $("email").value = user.email;
-      $("telefone").value = conta.telefone || "";
 
-      if (location.hash) document.querySelector(location.hash)?.scrollIntoView();
+      const { data: conta } = await sb.from("contas").select("telefone").eq("id", user.id).maybeSingle();
+      $("telefone").value = conta?.telefone || "";
+
+      if (recuperacao) $("seguranca").scrollIntoView();
+      else if (location.hash) document.querySelector(location.hash)?.scrollIntoView();
     });
 
-    $("formPerfil").addEventListener("submit", (ev) => {
+    $("formPerfil").addEventListener("submit", async (ev) => {
       ev.preventDefault();
       const nome = $("nome").value.trim();
       if (!nome) return avisar("O nome não pode ficar vazio.", "erro");
 
-      const dados = { nome, sobrenome: $("sobrenome").value.trim(), tipo: wopConta.tipo, atualizadoEm: agora() };
-      if (wopConta.tipo === "freelancer") {
+      const dados = { nome, sobrenome: $("sobrenome").value.trim() };
+      if (wopPerfil.tipo === "freelancer") {
         Object.assign(dados, {
-          area: $("area").value,
+          area: $("area").value || null,
           bio: $("bio").value.trim(),
-          valorHora: $("valorHora").value ? Number($("valorHora").value) : null,
+          valor_hora: $("valorHora").value ? Number($("valorHora").value) : null,
           moeda: $("moeda").value,
-          competencias: $("competencias").value.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 15),
+          competencias: listaCompetencias($("competencias").value, 15),
           disponivel: $("disponivel").checked,
         });
       } else {
         Object.assign(dados, { empresa: $("empresa").value.trim(), segmento: $("segmento").value.trim() });
       }
 
-      // O nome também fica na conta privada (usado no registo e na exportação).
-      Promise.all([
-        db.collection("perfis").doc(wopUser.uid).set(dados, { merge: true }),
-        db.collection("users").doc(wopUser.uid).update({ nome: dados.nome, sobrenome: dados.sobrenome }),
-      ])
-        .then(() => {
-          Object.assign(wopPerfil, dados);
-          avisar("Perfil público guardado.");
-        })
-        .catch((e) => avisar(traduzirErro(e), "erro"));
+      const { error } = await sb.from("perfis").update(dados).eq("id", wopUser.id);
+      if (error) return avisar(traduzirErro(error), "erro");
+      Object.assign(wopPerfil, dados);
+      avisar("Perfil público guardado.");
     });
 
-    $("formDados").addEventListener("submit", (ev) => {
+    $("formDados").addEventListener("submit", async (ev) => {
       ev.preventDefault();
-      db.collection("users").doc(wopUser.uid)
-        .update({ telefone: $("telefone").value.trim() })
-        .then(() => avisar("Dados privados guardados."))
-        .catch((e) => avisar(traduzirErro(e), "erro"));
+      const { error } = await sb.from("contas").update({ telefone: $("telefone").value.trim() }).eq("id", wopUser.id);
+      avisar(error ? traduzirErro(error) : "Dados privados guardados.", error ? "erro" : "ok");
     });
 
-    $("formSenha").addEventListener("submit", (ev) => {
+    // Confirma a palavra-passe atual iniciando sessão com ela.
+    async function confirmarSenha(senha) {
+      const { error } = await sb.auth.signInWithPassword({ email: wopUser.email, password: senha });
+      if (error) throw Object.assign(new Error("senha"), { code: "invalid_credentials" });
+    }
+
+    $("formSenha").addEventListener("submit", async (ev) => {
       ev.preventDefault();
-      const atual = $("senhaAtual").value;
       const nova = $("senhaNova").value;
-      if (!atual) return avisar("Escreve a palavra-passe atual.", "erro");
+      if (!recuperacao && !$("senhaAtual").value) return avisar("Escreve a palavra-passe atual.", "erro");
       if (nova.length < 8) return avisar("A nova palavra-passe tem de ter pelo menos 8 caracteres.", "erro");
       if (nova !== $("senhaRepetir").value) return avisar("As duas novas palavras-passe não são iguais.", "erro");
-
-      const cred = firebase.auth.EmailAuthProvider.credential(wopUser.email, atual);
-      wopUser.reauthenticateWithCredential(cred)
-        .then(() => wopUser.updatePassword(nova))
-        .then(() => {
-          $("formSenha").reset();
-          avisar("Palavra-passe alterada.");
-        })
-        .catch((e) => avisar(traduzirErro(e), "erro"));
+      try {
+        if (!recuperacao) await confirmarSenha($("senhaAtual").value);
+        ok(await sb.auth.updateUser({ password: nova }));
+        $("formSenha").reset();
+        avisar("Palavra-passe alterada.");
+        if (recuperacao) history.replaceState(null, "", "definicoes.html");
+      } catch (e) {
+        avisar(e.code === "invalid_credentials" ? "A palavra-passe atual não está certa." : traduzirErro(e), "erro");
+      }
     });
 
     /* Exportar dados (direito de acesso e portabilidade, art. 15.º e 20.º RGPD) */
@@ -276,38 +282,13 @@
       btn.disabled = true;
       btn.textContent = "A preparar o ficheiro…";
       try {
-        const uid = wopUser.uid;
-        const docs = (snap) => snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-        const campoPropostas = wopConta.tipo === "cliente" ? "clienteId" : "freelancerId";
-        const [conta, perfil, projetos, propostas, chats] = await Promise.all([
-          db.collection("users").doc(uid).get(),
-          db.collection("perfis").doc(uid).get(),
-          db.collection("projetos").where("clienteId", "==", uid).get(),
-          db.collection("propostas").where(campoPropostas, "==", uid).get(),
-          db.collection("chats").where("participantes", "array-contains", uid).get(),
-        ]);
-        const conversas = await Promise.all(chats.docs.map(async (c) => ({
-          id: c.id,
-          ...c.data(),
-          mensagens: docs(await c.ref.collection("mensagens").orderBy("hora").get()),
-        })));
-
-        const dados = {
-          geradoEm: new Date().toISOString(),
-          conta: conta.data(),
-          perfilPublico: perfil.data(),
-          projetos: docs(projetos),
-          propostas: docs(propostas),
-          conversas,
-        };
-        const json = JSON.stringify(dados, (k, v) => (v && typeof v.toDate === "function" ? v.toDate().toISOString() : v), 2);
+        const dados = ok(await sb.rpc("exportar_os_meus_dados"));
         const link = document.createElement("a");
-        link.href = URL.createObjectURL(new Blob([json], { type: "application/json" }));
+        link.href = URL.createObjectURL(new Blob([JSON.stringify(dados, null, 2)], { type: "application/json" }));
         link.download = `work-on-pan-dados-${new Date().toISOString().slice(0, 10)}.json`;
         link.click();
         URL.revokeObjectURL(link.href);
       } catch (e) {
-        console.error("[Work on Pan] exportar:", e);
         avisar("Não foi possível gerar o ficheiro. " + traduzirErro(e), "erro");
       } finally {
         btn.disabled = false;
@@ -324,30 +305,12 @@
       btn.disabled = true;
       btn.textContent = "A apagar…";
       try {
-        const uid = wopUser.uid;
-        await wopUser.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(wopUser.email, senha));
-
-        const lote = db.batch();
-        if (wopConta.tipo === "cliente") {
-          const [projetos, propostas] = await Promise.all([
-            db.collection("projetos").where("clienteId", "==", uid).get(),
-            db.collection("propostas").where("clienteId", "==", uid).where("estado", "==", "pendente").get(),
-          ]);
-          propostas.docs.forEach((d) => lote.update(d.ref, { estado: "fechada", atualizadoEm: agora() }));
-          projetos.docs.forEach((d) => lote.delete(d.ref));
-        } else {
-          const propostas = await db.collection("propostas")
-            .where("freelancerId", "==", uid).where("estado", "==", "pendente").get();
-          propostas.docs.forEach((d) => lote.update(d.ref, { estado: "retirada", atualizadoEm: agora() }));
-        }
-        lote.delete(db.collection("perfis").doc(uid));
-        lote.delete(db.collection("users").doc(uid));
-        await lote.commit();
-        await wopUser.delete();
+        await confirmarSenha(senha);
+        ok(await sb.rpc("apagar_a_minha_conta"));
+        await sb.auth.signOut({ scope: "local" });
         location.href = "login.html";
       } catch (e) {
-        console.error("[Work on Pan] apagar conta:", e);
-        avisar(traduzirErro(e), "erro");
+        avisar(e.code === "invalid_credentials" ? "Palavra-passe incorreta. A conta não foi apagada." : traduzirErro(e), "erro");
         btn.disabled = false;
         btn.textContent = "Apagar a minha conta";
       }

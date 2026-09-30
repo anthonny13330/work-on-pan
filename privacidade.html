@@ -48,7 +48,7 @@
           se fores cliente, empresa e setor, se os indicares.</li>
         <li><strong>Projetos e propostas:</strong> o que publicas ou envias (títulos, descrições, valores, prazos) e o respetivo estado.</li>
         <li><strong>Mensagens:</strong> o texto das conversas, a data e hora de envio e quando leste cada conversa.</li>
-        <li><strong>Dados técnicos de autenticação:</strong> o Firebase Authentication regista dados como o endereço IP e a data do
+        <li><strong>Dados técnicos de autenticação:</strong> o serviço de autenticação regista dados como o endereço IP e a data do
           último acesso para proteger a conta contra abusos.</li>
       </ul>
       <p>Não pedimos nem guardamos dados bancários, documentos de identificação, nem dados das categorias especiais do artigo 9.º do RGPD.
@@ -72,20 +72,21 @@
       </ul>
 
       <h2 id="subcontratantes">5. Serviços externos que usamos</h2>
-      <p>O site funciona sobre o <strong>Google Firebase</strong> (Google Ireland Ltd.), que guarda a base de dados e trata a
-        autenticação por nossa conta, ao abrigo de um acordo de subcontratação. Alguns dados podem ser tratados fora do Espaço
-        Económico Europeu; nesses casos a Google aplica as Cláusulas Contratuais-Tipo aprovadas pela Comissão Europeia e está
-        certificada no EU-US Data Privacy Framework. O site é alojado na <strong>Vercel</strong>, que recebe o endereço IP
-        de quem visita as páginas para as poder servir.</p>
+      <p>A base de dados e a autenticação funcionam no <strong>Supabase</strong> (Supabase Inc.), num servidor na
+        <strong>União Europeia (Irlanda)</strong>, ao abrigo de um acordo de subcontratação (DPA). O Supabase pode recorrer a
+        fornecedores fora do Espaço Económico Europeu para suporte técnico; nesses casos aplica as Cláusulas Contratuais-Tipo
+        aprovadas pela Comissão Europeia. O site é alojado na <strong>Vercel</strong>, que recebe o endereço IP de quem visita
+        as páginas para as poder servir. A biblioteca de ligação ao Supabase é descarregada do <strong>jsDelivr</strong>,
+        que também vê o endereço IP do visitante.</p>
       <p>Não carregamos tipos de letra, estatísticas nem anúncios de terceiros.</p>
 
       <h2 id="prazos">6. Durante quanto tempo</h2>
       <ul>
-        <li>Conta e perfil: enquanto a conta existir. Ao apagá-la, são removidos de imediato.</li>
-        <li>Projetos: até os apagares ou apagares a conta.</li>
-        <li>Propostas e mensagens: enquanto a outra parte da conversa ou do projeto tiver conta, porque fazem parte do histórico dela.
-          Podes pedir o seu apagamento pelo contacto acima.</li>
-        <li>Registos técnicos de autenticação: segundo os prazos do Firebase, em regra até 180 dias.</li>
+        <li>Conta, perfil, projetos, propostas e conversas: enquanto a conta existir. Ao apagá-la, tudo isto é removido de
+          imediato, incluindo as conversas (que deixam também de estar visíveis para a outra pessoa).</li>
+        <li>Projetos apagados por ti: removidos de imediato, com as propostas recebidas.</li>
+        <li>Cópias de segurança automáticas da base de dados e registos técnicos de autenticação: apagados de acordo com
+          os prazos de retenção do Supabase para o plano contratado.</li>
       </ul>
 
       <h2 id="direitos">7. Os teus direitos</h2>
@@ -103,7 +104,7 @@
       <h2 id="cookies">8. Cookies e armazenamento local</h2>
       <p>Não usamos cookies de publicidade, de estatística nem de redes sociais. O site guarda no teu navegador apenas:</p>
       <ul>
-        <li><strong>Sessão do Firebase</strong> (IndexedDB) — mantém-te com a sessão iniciada. Estritamente necessário.</li>
+        <li><strong><code>sb-…-auth-token</code></strong> (localStorage) — mantém-te com a sessão iniciada. Estritamente necessário.</li>
         <li><strong><code>wop_tema</code></strong> (localStorage) — lembra o tema claro/escuro que escolheste.</li>
         <li><strong><code>wop_aviso_cookies</code></strong> (localStorage) — lembra que já fechaste o aviso sobre cookies.</li>
       </ul>
@@ -111,8 +112,9 @@
         nas definições do navegador; nesse caso terás de voltar a entrar.</p>
 
       <h2 id="seguranca">9. Segurança</h2>
-      <p>As ligações usam HTTPS. As palavras-passe são geridas pelo Firebase Authentication e nunca ficam visíveis para nós.
-        As regras da base de dados impedem que um utilizador leia propostas ou conversas de outras pessoas. Se detetarmos uma
+      <p>As ligações usam HTTPS. As palavras-passe são guardadas cifradas pelo serviço de autenticação e nunca ficam visíveis
+        para nós. As regras da base de dados (segurança por linha) impedem que um utilizador leia propostas ou conversas de
+        outras pessoas, ou os dados privados de outra conta. Se detetarmos uma
         violação de dados que ponha em risco os teus direitos, avisamos-te e à CNPD no prazo legal de 72 horas.</p>
 
       <h2 id="alteracoes">10. Alterações a esta política</h2>
@@ -122,10 +124,8 @@
 
   <footer id="rodape" class="rodape"></footer>
 
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="firebase-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
+  <script src="supabase-config.js"></script>
   <script src="app.js"></script>
   <script>
     document.querySelectorAll("[data-responsavel]").forEach((el) => (el.textContent = RESPONSAVEL_DADOS));

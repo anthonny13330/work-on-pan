@@ -1,52 +1,45 @@
 # Work on Pan
 
 Plataforma simples onde **clientes** publicam projetos e **freelancers** enviam propostas.
-HTML + CSS + JavaScript sem build, com Firebase (Auth + Firestore) e alojamento na Vercel.
+HTML + CSS + JavaScript sem build, com [Supabase](https://supabase.com) (Postgres, Auth, Realtime) e alojamento na Vercel.
 
 ## Páginas
 
 | Página | Quem | O que faz |
 | --- | --- | --- |
 | `projetos.html` | todos | Projetos abertos. Freelancers com sessão enviam propostas. |
-| `index.html` | com sessão | Painel. Cliente: os seus projetos, propostas recebidas (aceitar/recusar), publicar, procurar freelancers. Freelancer: as suas propostas (editar/retirar). |
-| `chat.html` | com sessão | Caixa de mensagens: conversas por projeto ou diretas, filtro «por ler», contador no menu. |
+| `index.html` | com sessão | Painel. Cliente: os seus projetos, propostas recebidas (aceitar/recusar), publicar, procurar freelancers. Freelancer: as suas propostas (editar, retirar, reenviar). |
+| `chat.html` | com sessão | Caixa de mensagens em tempo real: conversas por projeto ou diretas, filtro «por ler», contador no menu. |
 | `definicoes.html` | com sessão | Perfil público, dados privados, tema, palavra-passe, exportar e apagar dados (RGPD). |
-| `login.html`, `cadastro.html` | sem sessão | Entrar e criar conta (com consentimento dos termos e privacidade). |
+| `login.html`, `cadastro.html` | sem sessão | Entrar, recuperar palavra-passe e criar conta (com consentimento dos termos e privacidade). |
 | `privacidade.html`, `termos.html` | todos | Política de privacidade (RGPD) e termos de utilização. |
 
-Código partilhado: `app.js` (sessão, cabeçalho, rodapé, utilitários, conversas) e `styles.css`.
+Código partilhado: `app.js` (sessão, cabeçalho, rodapé, utilitários), `styles.css` e `supabase-config.js` (URL e chave pública).
 
-## Base de dados (Firestore)
+## Base de dados
+
+O esquema completo está em [`supabase/esquema.sql`](supabase/esquema.sql).
 
 ```
-users/{uid}            privado: e-mail, telefone, tipo, consentimento   (só o próprio lê)
-perfis/{uid}           público: nome, área, bio, competências…          (todos leem)
-projetos/{id}          clienteId, titulo, descricao, orcamento, moeda, prazoDias, estado
-                       estado: aberto → em_andamento → concluido  (ou fechado)
-propostas/{projetoId}_{freelancerId}
-                       uma por freelancer e projeto; estado: pendente | aceite | recusada | retirada | fechada
-chats/{id}             p_{projetoId}_{freelancerId}  ou  d_{uidA}_{uidB}
-chats/{id}/mensagens   autor (uid ou "sistema"), texto, hora
+auth.users ─1:1─ perfis (público) ─1:1─ contas (privado: telefone, consentimento)
+perfis(cliente) ─1:N─ projetos ─1:N─ propostas ─N:1─ perfis(freelancer)
+conversas (cliente × freelancer × projeto opcional) ─1:N─ mensagens
 ```
 
-Nenhuma consulta usa `where` + `orderBy` juntos, por isso **não é preciso criar índices compostos**
-(era isso que fazia os projetos do cliente não aparecerem).
+- Chaves estrangeiras com `on delete cascade`: apagar uma conta apaga tudo o que lhe pertence.
+- Segurança por linha (RLS) em todas as tabelas; o browser só pode escrever o próprio perfil, os próprios projetos e mensagens nas suas conversas.
+- As ações com regras de negócio são funções no servidor (`/rest/v1/rpc/...`):
+  `enviar_proposta`, `retirar_proposta`, `responder_proposta` (aceitar/recusar), `abrir_conversa`,
+  `marcar_conversa_lida`, `exportar_os_meus_dados`, `apagar_a_minha_conta`.
+- Gatilhos: criam o perfil no registo, mantêm o resumo da conversa, fecham propostas pendentes quando o projeto fecha
+  e impedem mudanças de estado inválidas.
 
-## Antes de publicar
+## Configuração no painel do Supabase
 
-1. Em `app.js`, preenche `RESPONSAVEL_DADOS` e `CONTACTO_PRIVACIDADE` (aparecem na política de privacidade e no rodapé).
-2. Publica as regras: Firebase Console → Firestore Database → Regras → cola o `firestore.rules` → Publicar
-   (ou `firebase deploy --only firestore:rules`).
+1. **Authentication → URL Configuration**: em *Site URL* põe o domínio da Vercel (ex.: `https://work-on-pan.vercel.app`)
+   e acrescenta-o também em *Redirect URLs* (`https://work-on-pan.vercel.app/**`). Sem isto, os links de confirmação
+   de e-mail e de recuperação de palavra-passe apontam para `localhost`.
+2. **Authentication → Emails**: traduz os modelos de e-mail para português, se quiseres.
+3. Em `app.js`, preenche `RESPONSAVEL_DADOS` e `CONTACTO_PRIVACIDADE` (política de privacidade e rodapé).
 
-## Limpar os dados antigos
-
-Os projetos, propostas e conversas antigos usam campos de uma versão anterior. Para começar do zero, apaga as coleções
-na Firebase Console (Firestore Database → clica nos três pontos da coleção → Eliminar coleção) ou com a Firebase CLI:
-
-```bash
-firebase firestore:delete projetos  --recursive --project work-on-pan
-firebase firestore:delete propostas --recursive --project work-on-pan
-firebase firestore:delete chats     --recursive --project work-on-pan
-```
-
-As contas (`users`) podem ficar: o perfil público (`perfis`) é criado automaticamente no próximo login.
+O plano gratuito pausa o projeto ao fim de uma semana sem uso; se o site deixar de carregar dados, reativa-o no painel.
