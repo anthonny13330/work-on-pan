@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Entrar · Work on Pan</title>
+  <meta name="description" content="Entra na tua conta Work on Pan para gerir projetos, propostas e mensagens.">
+  <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0a0d12" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="/logo.svg" type="image/svg+xml">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="preload" href="/fontes/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/componentes.css">
+  <link rel="stylesheet" href="/css/paginas.css">
+  <script src="/js/tema-inicial.js"></script>
+  <script src="/vendor/supabase/supabase.js" defer></script>
+  <script type="module" src="/js/paginas/entrar.js"></script>
+</head>
+<body>
+  <wop-topo></wop-topo>
+
+  <main id="conteudo">
+    <div class="entrada">
+      <header class="entrada-cabecalho">
+        <wop-logo tamanho="60"></wop-logo>
+        <h1>Entrar</h1>
+        <p>Usa o e-mail com que criaste a conta. Vais para o teu painel: clientes veem os seus projetos,
+          freelancers as suas propostas.</p>
+      </header>
+
+      <form class="cartao" id="formEntrar" novalidate>
+        <div id="mensagem" role="alert" hidden></div>
+        <div class="campo">
+          <label for="email">E-mail</label>
+          <input type="email" id="email" name="email" autocomplete="email" inputmode="email" required>
+        </div>
+        <div class="campo">
+          <label for="senha">Palavra-passe</label>
+          <input type="password" id="senha" name="senha" autocomplete="current-password" required>
+        </div>
+        <button type="submit" class="botao botao-principal botao-largo">Entrar na minha conta</button>
+        <p class="texto-pequeno texto-suave" style="margin-top: 1rem">
+          <button type="button" class="botao-texto" id="btnRecuperar">Esqueci-me da palavra-passe</button>
+          — enviamos um link para o e-mail acima.
+        </p>
+      </form>
+
+      <p class="texto-suave centrado" style="margin-top: 1.25rem">
+        Ainda não tens conta? <a href="/registar">Cria uma conta de cliente ou freelancer</a>.
+      </p>
+    </div>
+  </main>
+
+  <wop-rodape></wop-rodape>
+</body>
+</html>

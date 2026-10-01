@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Painel · Work on Pan</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0a0d12" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="/logo.svg" type="image/svg+xml">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="preload" href="/fontes/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/componentes.css">
+  <link rel="stylesheet" href="/css/paginas.css">
+  <script src="/js/tema-inicial.js"></script>
+  <script src="/vendor/supabase/supabase.js" defer></script>
+  <script type="module" src="/js/paginas/painel.js"></script>
+  <script type="speculationrules">{"prefetch":[{"where":{"href_matches":"/*"},"eagerness":"moderate"}]}</script>
+</head>
+<body>
+  <wop-topo></wop-topo>
+
+  <main id="conteudo">
+    <div id="aCarregar" class="lista" aria-busy="true">
+      <div class="esqueleto curto"></div><div class="esqueleto"></div><div class="esqueleto"></div>
+    </div>
+
+    <!-- ═══════════════ CLIENTE ═══════════════ -->
+    <div id="vistaCliente" hidden>
+      <header class="cabecalho-pagina">
+        <h1 id="cOla">Olá</h1>
+        <p>Publica o que precisas, compara as propostas e escolhe um freelancer. Depois de aceitares uma proposta,
+          o projeto passa a «Em andamento» e continuam a conversa em Mensagens.</p>
+      </header>
+
+      <ul class="resumo" aria-label="Resumo" id="resumoCliente"></ul>
+
+      <div class="separadores" role="tablist" aria-label="Secções do painel">
+        <button role="tab" id="tab-projetos" aria-controls="painel-projetos" aria-selected="true">Os meus projetos</button>
+        <button role="tab" id="tab-publicar" aria-controls="painel-publicar" aria-selected="false" tabindex="-1">Publicar novo projeto</button>
+        <button role="tab" id="tab-freelancers" aria-controls="painel-freelancers" aria-selected="false" tabindex="-1">Procurar freelancers</button>
+      </div>
+
+      <section role="tabpanel" id="painel-projetos" aria-labelledby="tab-projetos" tabindex="0">
+        <div id="listaMeusProjetos" class="lista"><div class="esqueleto"></div><div class="esqueleto"></div></div>
+      </section>
+
+      <section role="tabpanel" id="painel-publicar" aria-labelledby="tab-publicar" tabindex="0" hidden>
+        <form class="cartao" id="formPublicar" novalidate style="max-width: 46rem">
+          <h2>Publicar novo projeto</h2>
+          <p class="texto-suave texto-pequeno">Assim que publicares, o projeto aparece em «Projetos abertos» e qualquer
+            freelancer pode enviar-te uma proposta. Recebes as propostas em «Os meus projetos».</p>
+          <div id="msgPublicar" role="alert" hidden></div>
+
+          <div class="campo">
+            <label for="pubTitulo">O que precisas que seja feito?</label>
+            <input type="text" id="pubTitulo" name="titulo" maxlength="120" required placeholder="Ex.: Loja online para vender cerâmica artesanal">
+          </div>
+          <div class="campo">
+            <label for="pubCategoria">Área</label>
+            <select id="pubCategoria" name="categoria" required></select>
+          </div>
+          <div class="campo">
+            <label for="pubDescricao">Descrição</label>
+            <textarea id="pubDescricao" name="descricao" maxlength="4000" rows="7" required
+              placeholder="O objetivo, o que já tens (textos, fotos, logótipo…), o que esperas receber no fim e referências de que gostes."></textarea>
+            <span class="ajuda">Quanto mais concreto, melhores as propostas. Não escrevas dados pessoais como moradas ou NIF.</span>
+          </div>
+          <div class="linha-campos">
+            <div class="campo">
+              <label for="pubOrcamento">Orçamento total</label>
+              <input type="number" id="pubOrcamento" name="orcamento" min="1" step="1" inputmode="numeric" required>
+              <span class="ajuda">Valor de referência; os freelancers podem propor outro.</span>
+            </div>
+            <div class="campo">
+              <label for="pubMoeda">Moeda</label>
+              <select id="pubMoeda" name="moeda"></select>
+            </div>
+          </div>
+          <div class="linha-campos">
+            <div class="campo">
+              <label for="pubPrazo">Prazo de entrega (dias)</label>
+              <input type="number" id="pubPrazo" name="prazo_dias" min="1" max="365" step="1" inputmode="numeric" required>
+            </div>
+            <div class="campo">
+              <label for="pubCompetencias">Competências úteis <span class="texto-suave">(opcional)</span></label>
+              <input type="text" id="pubCompetencias" name="competencias" placeholder="Ex.: Shopify, fotografia de produto">
+              <span class="ajuda">Separa com vírgulas.</span>
+            </div>
+          </div>
+          <button type="submit" class="botao botao-principal">Publicar projeto</button>
+        </form>
+      </section>
+
+      <section role="tabpanel" id="painel-freelancers" aria-labelledby="tab-freelancers" tabindex="0" hidden>
+        <search class="filtros" style="grid-template-columns: 1fr">
+          <div class="campo">
+            <label for="pesquisaFreelancers">Procurar por nome, área ou competência</label>
+            <input type="search" id="pesquisaFreelancers" autocomplete="off">
+          </div>
+        </search>
+        <div id="listaFreelancers" class="lista-grelha"><div class="esqueleto"></div><div class="esqueleto"></div></div>
+      </section>
+    </div>
+
+    <!-- ═══════════════ FREELANCER ═══════════════ -->
+    <div id="vistaFreelancer" hidden>
+      <header class="cabecalho-pagina">
+        <h1 id="fOla">Olá</h1>
+        <p>Aqui acompanhas as propostas que enviaste. Enquanto o cliente não responder podes editá-las ou retirá-las.
+          Trabalho novo está em <a href="/projetos">Procurar projetos</a>.</p>
+      </header>
+
+      <div id="avisoPerfil" class="cartao aviso-perfil" hidden>
+        <strong>O teu perfil está incompleto.</strong>
+        <p class="texto-suave" style="margin: 0.25rem 0 0.75rem">Os clientes veem a tua área, apresentação e competências
+          quando recebem uma proposta tua. Perfis completos têm mais respostas.</p>
+        <a class="botao botao-secundario botao-pequeno" href="/conta#perfil">Completar o meu perfil</a>
+      </div>
+
+      <ul class="resumo" aria-label="Resumo" id="resumoFreelancer"></ul>
+
+      <div class="cabecalho-secao">
+        <h2>As minhas propostas</h2>
+        <a class="botao botao-principal botao-pequeno" href="/projetos">Procurar projetos</a>
+      </div>
+      <div id="listaPropostas" class="lista"><div class="esqueleto"></div><div class="esqueleto"></div></div>
+    </div>
+  </main>
+
+  <dialog id="janelaEditar" aria-labelledby="jeTitulo"></dialog>
+
+  <wop-rodape></wop-rodape>
+</body>
+</html>

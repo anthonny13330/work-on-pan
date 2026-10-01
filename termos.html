@@ -2,18 +2,26 @@
 <html lang="pt-PT">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Termos de utilização · Work on Pan</title>
   <meta name="description" content="Regras de utilização do Work on Pan para clientes e freelancers.">
-  <link rel="icon" href="logo.svg" type="image/svg+xml">
-  <link rel="preload" href="fontes/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="styles.css">
-  <script>try{var t=localStorage.getItem("wop_tema");if(t==="claro")document.documentElement.dataset.theme="light";if(t==="escuro")document.documentElement.dataset.theme="dark"}catch(e){}</script>
+  <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0a0d12" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="/logo.svg" type="image/svg+xml">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="preload" href="/fontes/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/componentes.css">
+  <link rel="stylesheet" href="/css/paginas.css">
+  <script src="/js/tema-inicial.js"></script>
+  <script src="/vendor/supabase/supabase.js" defer></script>
+  <script type="module" src="/js/paginas/legal.js"></script>
+  <script type="speculationrules">{"prefetch":[{"where":{"href_matches":"/*"},"eagerness":"moderate"}]}</script>
 </head>
 <body>
-  <header id="topo" class="topo"></header>
+  <wop-topo></wop-topo>
 
-  <main>
+  <main id="conteudo">
     <article class="texto-longo">
       <h1>Termos de utilização</h1>
       <p class="texto-suave">Última atualização: setembro de 2026</p>
@@ -62,18 +70,13 @@
         responsáveis pela qualidade dos trabalhos nem pelo cumprimento dos acordos entre utilizadores.</p>
 
       <h2>8. Dados pessoais</h2>
-      <p>O tratamento dos teus dados está descrito na <a href="privacidade.html">política de privacidade</a>.</p>
+      <p>O tratamento dos teus dados está descrito na <a href="/privacidade">política de privacidade</a>.</p>
 
       <h2>9. Alterações e lei aplicável</h2>
       <p>Podemos atualizar estes termos; se a mudança for relevante, avisamos antes. Aplica-se a lei portuguesa.</p>
     </article>
   </main>
 
-  <footer id="rodape" class="rodape"></footer>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js"></script>
-  <script src="app.js"></script>
-  <script>sessaoOpcional(() => {});</script>
+  <wop-rodape></wop-rodape>
 </body>
 </html>

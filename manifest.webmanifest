@@ -1,0 +1,14 @@
+{
+  "name": "Work on Pan",
+  "short_name": "Work on Pan",
+  "description": "Projetos e freelancers em português.",
+  "lang": "pt-PT",
+  "start_url": "/painel",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0a0d12",
+  "theme_color": "#0d9488",
+  "icons": [
+    { "src": "/logo.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
