@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Projetos abertos · Work on Pan</title>
   <meta name="description" content="Projetos publicados por clientes que estão a receber propostas de freelancers.">
-  <link rel="icon" href="pan.png">
+  <link rel="icon" href="logo.svg" type="image/svg+xml">
+  <link rel="preload" href="fontes/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="styles.css">
   <script>try{var t=localStorage.getItem("wop_tema");if(t==="claro")document.documentElement.dataset.theme="light";if(t==="escuro")document.documentElement.dataset.theme="dark"}catch(e){}</script>
 </head>
@@ -48,7 +49,9 @@
     </form>
 
     <p id="contagem" class="texto-suave texto-pequeno" aria-live="polite">A carregar projetos…</p>
-    <div id="listaProjetos" class="lista-cartoes duas-colunas"></div>
+    <div id="listaProjetos" class="lista-cartoes duas-colunas">
+      <div class="esqueleto"></div><div class="esqueleto"></div><div class="esqueleto"></div><div class="esqueleto"></div>
+    </div>
   </main>
 
   <dialog id="janelaProjeto" aria-labelledby="jpTitulo">
@@ -159,6 +162,7 @@
             </div>
           </article>`;
       }).join("");
+      animarEntrada($("listaProjetos"));
     }
 
     function limparFiltros() {

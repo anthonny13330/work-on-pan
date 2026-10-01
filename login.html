@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Entrar · Work on Pan</title>
   <meta name="description" content="Entra na tua conta Work on Pan para gerir projetos, propostas e mensagens.">
-  <link rel="icon" href="pan.png">
+  <link rel="icon" href="logo.svg" type="image/svg+xml">
+  <link rel="preload" href="fontes/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="styles.css">
   <script>try{var t=localStorage.getItem("wop_tema");if(t==="claro")document.documentElement.dataset.theme="light";if(t==="escuro")document.documentElement.dataset.theme="dark"}catch(e){}</script>
 </head>
@@ -15,7 +16,7 @@
   <main>
     <div class="entrada">
       <div class="entrada-cabecalho">
-        <img src="pan.png" alt="">
+        <span class="logo-grande" data-logo="60"></span>
         <h1>Entrar</h1>
         <p class="texto-suave">Usa o e-mail com que criaste a conta. Vais para o teu painel:
           clientes veem os seus projetos, freelancers veem as suas propostas.</p>
@@ -78,9 +79,27 @@
       btn.textContent = "A entrar…";
       const { error } = await sb.auth.signInWithPassword({ email, password });
       if (!error) return (location.href = destino);
-      mostrar(traduzirErro(error));
       btn.disabled = false;
       btn.textContent = "Entrar na minha conta";
+      if (error.code !== "email_not_confirmed") return mostrar(traduzirErro(error));
+
+      // Conta por confirmar: explica e deixa pedir outro e-mail.
+      mostrar(`Ainda não confirmaste o e-mail ${email}. Abre o link que te enviámos (vê também o spam).`);
+      const reenviar = document.createElement("button");
+      reenviar.type = "button";
+      reenviar.className = "botao botao-secundario botao-pequeno";
+      reenviar.style.marginTop = "10px";
+      reenviar.textContent = "Enviar outra vez o e-mail de confirmação";
+      reenviar.onclick = async () => {
+        reenviar.disabled = true;
+        const { error: e } = await sb.auth.resend({
+          type: "signup",
+          email,
+          options: { emailRedirectTo: new URL("login.html?confirmado=1", location.href).href },
+        });
+        mostrar(e ? traduzirErro(e) : `Enviámos um novo link para ${email}.`, e ? "erro" : "ok");
+      };
+      $("mensagem").append(document.createElement("br"), reenviar);
     });
 
     $("btnRecuperar").addEventListener("click", async () => {

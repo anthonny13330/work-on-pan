@@ -4,7 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Painel · Work on Pan</title>
-  <link rel="icon" href="pan.png">
+  <link rel="icon" href="logo.svg" type="image/svg+xml">
+  <link rel="preload" href="fontes/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="styles.css">
   <script>try{var t=localStorage.getItem("wop_tema");if(t==="claro")document.documentElement.dataset.theme="light";if(t==="escuro")document.documentElement.dataset.theme="dark"}catch(e){}</script>
 </head>
@@ -36,7 +37,7 @@
       </div>
 
       <section role="tabpanel" id="painel-projetos" aria-labelledby="tab-projetos">
-        <div id="listaMeusProjetos" class="lista-cartoes"></div>
+        <div id="listaMeusProjetos" class="lista-cartoes"><div class="esqueleto"></div><div class="esqueleto"></div></div>
       </section>
 
       <section role="tabpanel" id="painel-publicar" aria-labelledby="tab-publicar" hidden>
@@ -99,7 +100,7 @@
             <input type="search" id="pesquisaFreelancers">
           </div>
         </div>
-        <div id="listaFreelancers" class="lista-cartoes duas-colunas"></div>
+        <div id="listaFreelancers" class="lista-cartoes duas-colunas"><div class="esqueleto"></div><div class="esqueleto"></div></div>
       </section>
     </div>
 
@@ -129,7 +130,7 @@
         <h2>As minhas propostas</h2>
         <a class="botao botao-principal botao-pequeno" href="projetos.html">Procurar projetos</a>
       </div>
-      <div id="listaPropostas" class="lista-cartoes"></div>
+      <div id="listaPropostas" class="lista-cartoes"><div class="esqueleto"></div><div class="esqueleto"></div></div>
     </div>
   </main>
 
@@ -275,6 +276,7 @@
             </div>
           </article>`;
       }).join("");
+      animarEntrada(alvo);
     }
 
     function cartaoPropostaRecebida(projeto, pp) {
@@ -446,6 +448,7 @@
             <button class="botao botao-secundario botao-pequeno" onclick="irParaConversa('${esc(f.id)}')">Enviar mensagem</button>
           </div>
         </article>`).join("");
+      animarEntrada($("listaFreelancers"));
     }
 
     /* ─────────────── Freelancer ─────────────── */
@@ -534,6 +537,7 @@
             </div>
           </article>`;
       }).join("");
+      animarEntrada($("listaPropostas"));
     }
 
     function editarProposta(id) {

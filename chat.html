@@ -4,7 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Mensagens · Work on Pan</title>
-  <link rel="icon" href="pan.png">
+  <link rel="icon" href="logo.svg" type="image/svg+xml">
+  <link rel="preload" href="fontes/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="styles.css">
   <script>try{var t=localStorage.getItem("wop_tema");if(t==="claro")document.documentElement.dataset.theme="light";if(t==="escuro")document.documentElement.dataset.theme="dark"}catch(e){}</script>
 </head>
@@ -26,7 +27,7 @@
           </div>
         </div>
         <ul class="conversas" id="listaConversas">
-          <li class="vazio texto-pequeno">A carregar conversas…</li>
+          <li class="esqueleto linha-curta" aria-hidden="true"></li><li class="esqueleto linha-curta" aria-hidden="true"></li><li class="esqueleto linha-curta" aria-hidden="true"></li>
         </ul>
       </section>
 
@@ -136,6 +137,7 @@
             </button>
           </li>`;
       }).join("");
+      animarEntrada(alvo);
     }
 
     document.querySelectorAll("[data-filtro]").forEach((b) =>
@@ -168,6 +170,7 @@
       if (!mudou) return;
       if (canalMensagens) sb.removeChannel(canalMensagens);
       mensagens = [];
+      mostradas = null;
       $("mensagens").innerHTML = "";
 
       // Mensagens novas chegam em tempo real; a lista inicial vem de uma consulta.
@@ -203,14 +206,20 @@
       alvo.hidden = false;
     }
 
+    // Ids já mostrados nesta conversa: só as mensagens que chegam depois são animadas.
+    let mostradas = null;
+
     function desenharMensagens(forcarFundo = false) {
       const caixa = $("mensagens");
       const noFundo = forcarFundo || caixa.scrollHeight - caixa.scrollTop - caixa.clientHeight < 80;
+      const primeira = mostradas === null;
       caixa.innerHTML = mensagens.map((m) => {
         const classe = m.autor_id === null ? "sistema" : m.autor_id === wopUser.id ? "minha" : "outra";
+        const nova = !primeira && !mostradas.has(m.id) ? " nova" : "";
         const hora = classe === "sistema" ? "" : `<time>${esc(horaCurta(m.criado_em))}</time>`;
-        return `<div class="msg ${classe}">${esc(m.texto)}${hora}</div>`;
+        return `<div class="msg ${classe}${nova}">${esc(m.texto)}${hora}</div>`;
       }).join("");
+      mostradas = new Set(mensagens.map((m) => m.id));
       if (noFundo) caixa.scrollTop = caixa.scrollHeight;
     }
 
