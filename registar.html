@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Criar conta · Work on Pan</title>
+  <meta name="description" content="Cria uma conta gratuita no Work on Pan para publicar projetos ou enviar propostas como freelancer.">
+  <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0a0d12" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="/logo.svg" type="image/svg+xml">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="preload" href="/fontes/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/componentes.css">
+  <link rel="stylesheet" href="/css/paginas.css">
+  <script src="/js/tema-inicial.js"></script>
+  <script src="/vendor/supabase/supabase.js" defer></script>
+  <script type="module" src="/js/paginas/registar.js"></script>
+</head>
+<body>
+  <wop-topo></wop-topo>
+
+  <main id="conteudo">
+    <div class="entrada larga">
+      <header class="entrada-cabecalho">
+        <wop-logo tamanho="60"></wop-logo>
+        <h1>Criar conta</h1>
+        <p>É gratuito. Escolhe como vais usar o Work on Pan — não dá para mudar depois, por isso, se precisares
+          das duas coisas, cria duas contas com e-mails diferentes.</p>
+      </header>
+
+      <form id="formRegisto" novalidate>
+        <fieldset class="escolha-perfil">
+          <legend class="so-leitores">Tipo de conta</legend>
+          <label>
+            <input type="radio" name="tipo" value="cliente" required>
+            <span>
+              <strong>Sou cliente</strong>
+              <span>Tenho um trabalho para fazer. Publico o projeto, recebo propostas e escolho uma.</span>
+            </span>
+          </label>
+          <label>
+            <input type="radio" name="tipo" value="freelancer">
+            <span>
+              <strong>Sou freelancer</strong>
+              <span>Procuro trabalho. Vejo projetos abertos, envio propostas e falo com os clientes.</span>
+            </span>
+          </label>
+        </fieldset>
+
+        <div class="cartao">
+          <div id="mensagem" role="alert" hidden></div>
+
+          <div class="linha-campos">
+            <div class="campo">
+              <label for="nome">Nome</label>
+              <input type="text" id="nome" name="nome" autocomplete="given-name" maxlength="60" required>
+            </div>
+            <div class="campo">
+              <label for="sobrenome">Apelido</label>
+              <input type="text" id="sobrenome" name="sobrenome" autocomplete="family-name" maxlength="60">
+            </div>
+          </div>
+
+          <div class="campo">
+            <label for="email">E-mail</label>
+            <input type="email" id="email" name="email" autocomplete="email" inputmode="email" required>
+            <span class="ajuda">Não aparece no perfil. Só serve para entrares e recuperares a conta. Confirma que está bem escrito.</span>
+          </div>
+
+          <div class="campo">
+            <label for="senha">Palavra-passe</label>
+            <input type="password" id="senha" name="senha" autocomplete="new-password" minlength="8" required>
+            <span class="ajuda">Pelo menos 8 caracteres.</span>
+          </div>
+
+          <!-- Aparece só quando «Sou freelancer» está escolhido (CSS :has, sem JavaScript). -->
+          <div class="so-freelancer">
+            <h2 style="margin-top: 0.5rem">O teu perfil profissional</h2>
+            <p class="texto-suave texto-pequeno" style="margin-bottom: 1rem">Os clientes veem isto quando procuram
+              freelancers. Podes mudar depois em «A minha conta».</p>
+            <div class="campo">
+              <label for="area">Em que trabalhas?</label>
+              <select id="area" name="area"></select>
+            </div>
+            <div class="campo">
+              <label for="bio">Apresentação curta</label>
+              <textarea id="bio" name="bio" maxlength="800"
+                placeholder="Ex.: Faço sites em WordPress para pequenos negócios há 4 anos. Trato também do alojamento e do domínio."></textarea>
+            </div>
+            <div class="linha-campos">
+              <div class="campo">
+                <label for="valorHora">Preço por hora <span class="texto-suave">(opcional)</span></label>
+                <input type="number" id="valorHora" name="valor_hora" min="0" step="1" inputmode="numeric">
+              </div>
+              <div class="campo">
+                <label for="moeda">Moeda</label>
+                <select id="moeda" name="moeda"></select>
+              </div>
+            </div>
+            <div class="campo">
+              <label for="competencias">Ferramentas e competências</label>
+              <input type="text" id="competencias" name="competencias" placeholder="Ex.: Figma, WordPress, SEO">
+              <span class="ajuda">Separa com vírgulas.</span>
+            </div>
+          </div>
+
+          <div class="so-cliente">
+            <h2 style="margin-top: 0.5rem">Sobre ti ou a tua empresa</h2>
+            <p class="texto-suave texto-pequeno" style="margin-bottom: 1rem">Opcional. Ajuda os freelancers a perceber para quem vão trabalhar.</p>
+            <div class="linha-campos">
+              <div class="campo">
+                <label for="empresa">Empresa ou marca</label>
+                <input type="text" id="empresa" name="empresa" maxlength="80" placeholder="Deixa vazio se for pessoal">
+              </div>
+              <div class="campo">
+                <label for="segmento">Setor</label>
+                <select id="segmento" name="segmento">
+                  <option value="">Prefiro não dizer</option>
+                  <option>Comércio e lojas online</option>
+                  <option>Restauração e turismo</option>
+                  <option>Saúde e bem-estar</option>
+                  <option>Educação e formação</option>
+                  <option>Tecnologia</option>
+                  <option>Serviços profissionais</option>
+                  <option>Associação ou uso pessoal</option>
+                  <option>Outro</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <label class="caixa-escolha" style="margin: 0.5rem 0 1.1rem">
+            <input type="checkbox" name="aceito" required>
+            <span>Li e aceito os <a href="/termos" target="_blank">Termos de utilização</a> e a
+              <a href="/privacidade" target="_blank">Política de privacidade</a>. Percebo que o meu nome e
+              perfil público ficam visíveis para outros utilizadores.</span>
+          </label>
+
+          <button type="submit" class="botao botao-principal botao-largo botao-grande">Criar a minha conta</button>
+        </div>
+      </form>
+
+      <p class="texto-suave centrado" style="margin-top: 1.25rem">Já tens conta? <a href="/entrar">Entrar</a></p>
+    </div>
+  </main>
+
+  <wop-rodape></wop-rodape>
+</body>
+</html>

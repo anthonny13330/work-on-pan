@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <title>Mensagens · Work on Pan</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0a0d12" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="/logo.svg" type="image/svg+xml">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="preload" href="/fontes/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/componentes.css">
+  <link rel="stylesheet" href="/css/paginas.css">
+  <script src="/js/tema-inicial.js"></script>
+  <script src="/vendor/supabase/supabase.js" defer></script>
+  <script type="module" src="/js/paginas/mensagens.js"></script>
+</head>
+<body class="mensagens-pagina">
+  <wop-topo></wop-topo>
+
+  <main id="conteudo">
+    <div class="caixa-entrada" id="caixa">
+      <section class="lista-conversas" aria-labelledby="tituloMensagens">
+        <div class="lista-conversas-topo">
+          <h1 id="tituloMensagens">Mensagens</h1>
+          <label for="pesquisaConversas" class="so-leitores">Procurar conversa</label>
+          <input type="search" id="pesquisaConversas" placeholder="Procurar por pessoa ou projeto" autocomplete="off">
+          <div class="filtro-conversas" role="group" aria-label="Filtrar conversas">
+            <button type="button" data-filtro="todas" aria-pressed="true">Todas</button>
+            <button type="button" data-filtro="por-ler" aria-pressed="false">Por ler</button>
+            <button type="button" data-filtro="projetos" aria-pressed="false">Sobre projetos</button>
+          </div>
+        </div>
+        <ul class="conversas" id="listaConversas">
+          <li class="esqueleto curto" aria-hidden="true"></li>
+          <li class="esqueleto curto" aria-hidden="true"></li>
+          <li class="esqueleto curto" aria-hidden="true"></li>
+        </ul>
+      </section>
+
+      <section class="painel-conversa" id="painelConversa" aria-label="Conversa"></section>
+
+      <div class="sem-conversa">
+        <div>
+          <wop-logo tamanho="56" style="margin: 0 auto 1rem; opacity: 0.85"></wop-logo>
+          <h2>Escolhe uma conversa</h2>
+          <p>As conversas abrem-se quando um freelancer envia uma proposta<br>ou quando um cliente contacta um freelancer.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

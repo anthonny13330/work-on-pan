@@ -2,587 +2,162 @@
 <html lang="pt-PT">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Painel · Work on Pan</title>
-  <link rel="icon" href="pan.png">
-  <link rel="stylesheet" href="styles.css">
-  <script>try{var t=localStorage.getItem("wop_tema");if(t==="claro")document.documentElement.dataset.theme="light";if(t==="escuro")document.documentElement.dataset.theme="dark"}catch(e){}</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Work on Pan · Encontra quem faça. Faz o que sabes.</title>
+  <meta name="description" content="Publica um projeto e recebe propostas de freelancers com preço e prazo à vista, ou envia propostas para os projetos que sabes fazer. Gratuito, em português e com os dados na UE.">
+  <meta property="og:title" content="Work on Pan">
+  <meta property="og:description" content="Encontra quem faça. Faz o que sabes. Projetos e freelancers em português.">
+  <meta property="og:type" content="website">
+  <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0a0d12" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="/logo.svg" type="image/svg+xml">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="preload" href="/fontes/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/componentes.css">
+  <link rel="stylesheet" href="/css/paginas.css">
+  <script src="/js/tema-inicial.js"></script>
+  <script src="/vendor/supabase/supabase.js" defer></script>
+  <script type="module" src="/js/paginas/inicio.js"></script>
+  <script type="speculationrules">{"prefetch":[{"where":{"href_matches":"/*"},"eagerness":"moderate"}]}</script>
 </head>
-<body>
-  <header id="topo" class="topo"></header>
+<body class="inicio">
+  <wop-topo></wop-topo>
 
-  <main>
-    <p class="texto-suave" id="aCarregar">A carregar o teu painel…</p>
-
-    <!-- ═══════════════ CLIENTE ═══════════════ -->
-    <div id="vistaCliente" hidden>
-      <div class="cabecalho-pagina">
-        <h1 id="cOla">Olá</h1>
-        <p>Publica o que precisas, compara as propostas que chegam e escolhe um freelancer.
-          Depois de aceitares uma proposta, o projeto passa a «Em andamento» e continuam a conversa em Mensagens.</p>
-      </div>
-
-      <ul class="resumo" aria-label="Resumo">
-        <li><strong id="cAbertos">0</strong><span>a receber propostas</span></li>
-        <li><strong id="cPorResponder">0</strong><span>propostas por responder</span></li>
-        <li><strong id="cAndamento">0</strong><span>em andamento</span></li>
-        <li><strong id="cConcluidos">0</strong><span>concluídos</span></li>
-      </ul>
-
-      <div class="separadores" role="tablist" aria-label="Secções do painel">
-        <button role="tab" id="tab-projetos" aria-controls="painel-projetos" aria-selected="true">Os meus projetos</button>
-        <button role="tab" id="tab-publicar" aria-controls="painel-publicar" aria-selected="false">Publicar novo projeto</button>
-        <button role="tab" id="tab-freelancers" aria-controls="painel-freelancers" aria-selected="false">Procurar freelancers</button>
-      </div>
-
-      <section role="tabpanel" id="painel-projetos" aria-labelledby="tab-projetos">
-        <div id="listaMeusProjetos" class="lista-cartoes"></div>
-      </section>
-
-      <section role="tabpanel" id="painel-publicar" aria-labelledby="tab-publicar" hidden>
-        <form class="cartao" id="formPublicar" novalidate style="max-width: 720px">
-          <h2>Publicar novo projeto</h2>
-          <p class="texto-suave texto-pequeno">Assim que publicares, o projeto aparece em «Projetos abertos» e qualquer freelancer
-            pode enviar-te uma proposta. Recebes as propostas em «Os meus projetos».</p>
-
-          <div id="msgPublicar" class="mensagem-form" role="alert" hidden></div>
-
-          <div class="campo">
-            <label for="pubTitulo">O que precisas que seja feito?</label>
-            <input type="text" id="pubTitulo" maxlength="120" placeholder="Ex.: Loja online para vender cerâmica artesanal">
+  <main id="conteudo">
+    <section class="heroi" aria-labelledby="tituloHeroi">
+      <div class="faixa heroi-interior" style="padding-block: 0">
+        <div>
+          <p class="sobretitulo">Trabalho independente, em português</p>
+          <h1 id="tituloHeroi">Encontra quem faça. <em>Faz o que sabes.</em></h1>
+          <p class="heroi-texto">Publica o que precisas e recebe propostas de freelancers com preço e prazo à vista.
+            Ou mostra o que sabes fazer e responde aos projetos que te interessam.</p>
+          <div class="acoes" id="acoesHeroi">
+            <a class="botao botao-principal botao-grande" href="/registar?tipo=cliente">Publicar um projeto</a>
+            <a class="botao botao-secundario botao-grande" href="/projetos">Procurar trabalho</a>
           </div>
-
-          <div class="campo">
-            <label for="pubCategoria">Área</label>
-            <select id="pubCategoria"></select>
-          </div>
-
-          <div class="campo">
-            <label for="pubDescricao">Descrição</label>
-            <textarea id="pubDescricao" maxlength="4000" rows="7"
-              placeholder="Explica o objetivo, o que já tens (textos, fotos, logótipo…), o que esperas receber no fim e qualquer referência que gostes."></textarea>
-            <span class="ajuda">Quanto mais concreto, melhores são as propostas. Não escrevas dados pessoais como moradas ou NIF.</span>
-          </div>
-
-          <div class="linha-campos">
-            <div class="campo">
-              <label for="pubOrcamento">Orçamento total</label>
-              <input type="number" id="pubOrcamento" min="1" step="1" inputmode="numeric">
-              <span class="ajuda">Um valor de referência. Os freelancers podem propor outro.</span>
-            </div>
-            <div class="campo">
-              <label for="pubMoeda">Moeda</label>
-              <select id="pubMoeda"></select>
-            </div>
-          </div>
-
-          <div class="linha-campos">
-            <div class="campo">
-              <label for="pubPrazo">Prazo de entrega (dias)</label>
-              <input type="number" id="pubPrazo" min="1" max="365" step="1" inputmode="numeric">
-            </div>
-            <div class="campo">
-              <label for="pubCompetencias">Competências úteis <span class="texto-suave">(opcional)</span></label>
-              <input type="text" id="pubCompetencias" placeholder="Ex.: Shopify, fotografia de produto">
-              <span class="ajuda">Separa com vírgulas.</span>
-            </div>
-          </div>
-
-          <button type="submit" class="botao botao-principal" id="btnPublicar">Publicar projeto</button>
-        </form>
-      </section>
-
-      <section role="tabpanel" id="painel-freelancers" aria-labelledby="tab-freelancers" hidden>
-        <div class="filtros" style="grid-template-columns: 1fr">
-          <div class="campo">
-            <label for="pesquisaFreelancers">Procurar por nome, área ou competência</label>
-            <input type="search" id="pesquisaFreelancers">
-          </div>
+          <p class="heroi-nota">Gratuito · Sem comissões · Dados guardados na União Europeia</p>
+          <ul class="numeros" id="numeros" aria-label="Números da plataforma"></ul>
         </div>
-        <div id="listaFreelancers" class="lista-cartoes duas-colunas"></div>
-      </section>
-    </div>
-
-    <!-- ═══════════════ FREELANCER ═══════════════ -->
-    <div id="vistaFreelancer" hidden>
-      <div class="cabecalho-pagina">
-        <h1 id="fOla">Olá</h1>
-        <p>Aqui acompanhas as propostas que enviaste. Enquanto o cliente não responder podes editar ou retirar a proposta.
-          Novos trabalhos estão em <a href="projetos.html">Procurar projetos</a>.</p>
+        <div class="heroi-montra" id="montra" aria-label="Projetos recentes"></div>
       </div>
+    </section>
 
-      <div id="avisoPerfil" class="cartao" hidden style="margin-bottom: 16px; border-color: var(--aviso)">
-        <strong>O teu perfil está incompleto.</strong>
-        <p class="texto-suave" style="margin: 4px 0 10px">Os clientes veem a tua área, apresentação e competências quando recebem
-          uma proposta tua. Perfis completos têm mais respostas.</p>
-        <a class="botao botao-secundario botao-pequeno" href="definicoes.html#perfil">Completar o meu perfil</a>
+    <section class="faixa" id="como-funciona" aria-labelledby="tituloComo">
+      <div class="titulo-secao revelar">
+        <p class="sobretitulo">Como funciona</p>
+        <h2 id="tituloComo">Três passos de cada lado</h2>
+        <p>Sem leilões nem algoritmos opacos: quem publica escolhe, quem propõe sabe sempre em que ponto está.</p>
       </div>
+      <div class="papeis">
+        <article class="cartao revelar">
+          <p class="sobretitulo">Para quem precisa</p>
+          <h3>Tens um trabalho para fazer</h3>
+          <ol class="passos">
+            <li><span><strong>Descreve o trabalho</strong>O que precisas, um orçamento de referência e o prazo.</span></li>
+            <li><span><strong>Recebe propostas</strong>Cada freelancer diz quanto cobra, em quantos dias entrega e como o faria.</span></li>
+            <li><span><strong>Escolhe e combina</strong>Aceitas uma proposta, as outras fecham sozinhas e continuam a conversa em Mensagens.</span></li>
+          </ol>
+          <a class="botao botao-principal" href="/registar?tipo=cliente">Criar conta de cliente</a>
+        </article>
+        <article class="cartao revelar">
+          <p class="sobretitulo">Para quem faz</p>
+          <h3>Sabes fazer e queres trabalho</h3>
+          <ol class="passos">
+            <li><span><strong>Cria o teu perfil</strong>Área, uma apresentação curta e as ferramentas que dominas.</span></li>
+            <li><span><strong>Escolhe projetos</strong>Filtra por área e orçamento; lê os detalhes antes de decidir.</span></li>
+            <li><span><strong>Envia a proposta</strong>Podes editá-la ou retirá-la enquanto o cliente não responde.</span></li>
+          </ol>
+          <a class="botao botao-secundario" href="/registar?tipo=freelancer">Criar conta de freelancer</a>
+        </article>
+      </div>
+    </section>
 
-      <ul class="resumo" aria-label="Resumo">
-        <li><strong id="fPendentes">0</strong><span>à espera de resposta</span></li>
-        <li><strong id="fAceites">0</strong><span>aceites</span></li>
-        <li><strong id="fRecusadas">0</strong><span>recusadas ou fechadas</span></li>
-        <li><strong id="fAbertos">0</strong><span>projetos abertos agora</span></li>
+    <section class="faixa faixa-alternada" aria-labelledby="tituloRecentes" style="max-width: none">
+      <div style="max-width: var(--largura); margin-inline: auto">
+        <div class="cabecalho-secao" style="margin-top: 0">
+          <div>
+            <p class="sobretitulo">Agora mesmo</p>
+            <h2 id="tituloRecentes">Projetos à procura de quem os faça</h2>
+          </div>
+          <a class="botao botao-secundario" href="/projetos">Ver todos os projetos</a>
+        </div>
+        <div class="lista-grelha" id="recentes"></div>
+      </div>
+    </section>
+
+    <section class="faixa" aria-labelledby="tituloGarantias">
+      <div class="titulo-secao revelar">
+        <p class="sobretitulo">O que podes esperar</p>
+        <h2 id="tituloGarantias">Feito com cuidado, sem letras pequenas</h2>
+      </div>
+      <ul class="garantias">
+        <li class="revelar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg>
+          <h3>Privacidade a sério</h3>
+          <p>Dados guardados na UE. Descarregas ou apagas tudo o que é teu quando quiseres, num clique.</p>
+        </li>
+        <li class="revelar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>
+          <h3>Tudo numa conversa</h3>
+          <p>Proposta, resposta e combinações ficam no mesmo histórico — útil se alguma coisa correr mal.</p>
+        </li>
+        <li class="revelar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15 9.5c-.6-1-1.7-1.5-3-1.5-1.7 0-3 1-3 2.3 0 3 6 1.7 6 4.6 0 1.3-1.3 2.3-3 2.3-1.4 0-2.6-.6-3.1-1.6M12 6.5V8M12 16.9v1.6"/></svg>
+          <h3>Sem comissões</h3>
+          <p>O valor combinado é entre ti e a outra pessoa. A plataforma não fica com uma parte.</p>
+        </li>
+        <li class="revelar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H8l-4 4z"/><path d="M8 9h8M8 12h5"/></svg>
+          <h3>Em português, de verdade</h3>
+          <p>Feito para quem trabalha em português — de Portugal ao Brasil — com euros, reais e outras moedas.</p>
+        </li>
       </ul>
+    </section>
 
-      <div class="cabecalho-secao">
-        <h2>As minhas propostas</h2>
-        <a class="botao botao-principal botao-pequeno" href="projetos.html">Procurar projetos</a>
+    <section class="faixa" aria-labelledby="tituloPerguntas" style="padding-top: 0">
+      <div class="titulo-secao">
+        <p class="sobretitulo">Perguntas frequentes</p>
+        <h2 id="tituloPerguntas">Antes de começares</h2>
       </div>
-      <div id="listaPropostas" class="lista-cartoes"></div>
-    </div>
+      <div class="perguntas">
+        <details name="pergunta">
+          <summary>Quanto custa?</summary>
+          <p>Nada. Criar conta, publicar projetos, enviar propostas e conversar é gratuito.</p>
+        </details>
+        <details name="pergunta">
+          <summary>Como é feito o pagamento?</summary>
+          <p>Diretamente entre cliente e freelancer, da forma que combinarem (transferência, MB Way, fatura…).
+            Recomendamos que registem na conversa o que vai ser entregue, o preço e as datas.</p>
+        </details>
+        <details name="pergunta">
+          <summary>Posso ser cliente e freelancer ao mesmo tempo?</summary>
+          <p>Por agora cada conta tem um papel. Se precisares dos dois, cria uma conta para cada com e-mails diferentes.</p>
+        </details>
+        <details name="pergunta">
+          <summary>Quem vê os meus dados?</summary>
+          <p>O teu nome e perfil público são visíveis. O e-mail e o telefone não. Propostas e mensagens só as veem as
+            duas pessoas envolvidas. Lê a <a href="/privacidade">política de privacidade</a>.</p>
+        </details>
+        <details name="pergunta">
+          <summary>Como apago a minha conta?</summary>
+          <p>Em «A minha conta» → «Os meus dados». Fica tudo apagado de imediato; antes podes descarregar uma cópia.</p>
+        </details>
+      </div>
+    </section>
+
+    <section class="faixa chamada-final" aria-labelledby="tituloFinal" style="padding-top: 0">
+      <div class="cartao revelar">
+        <h2 id="tituloFinal">O próximo projeto começa aqui</h2>
+        <p>Cria a conta em menos de um minuto. Se mudares de ideias, apagas tudo com um clique.</p>
+        <div class="acoes" id="acoesFinal">
+          <a class="botao botao-principal botao-grande" href="/registar">Criar conta grátis</a>
+          <a class="botao botao-secundario botao-grande" href="/projetos">Ver projetos primeiro</a>
+        </div>
+      </div>
+    </section>
   </main>
 
-  <dialog id="janelaEditar" aria-labelledby="jeTitulo">
-    <form class="dialog-corpo" id="formEditar" method="dialog" novalidate>
-      <div class="dialog-cabecalho">
-        <h2 id="jeTitulo" style="margin: 0">Editar proposta</h2>
-        <button type="button" class="fechar" onclick="$('janelaEditar').close()">Fechar</button>
-      </div>
-      <p class="texto-suave texto-pequeno" id="jeProjeto"></p>
-      <div id="msgEditar" class="mensagem-form erro" role="alert" hidden></div>
-      <div class="linha-campos">
-        <div class="campo">
-          <label for="jeValor">Valor total</label>
-          <input type="number" id="jeValor" min="1" step="1">
-        </div>
-        <div class="campo">
-          <label for="jePrazo">Entrega em (dias)</label>
-          <input type="number" id="jePrazo" min="1" step="1">
-        </div>
-      </div>
-      <div class="campo">
-        <label for="jeMensagem">Mensagem para o cliente</label>
-        <textarea id="jeMensagem" maxlength="3000"></textarea>
-      </div>
-      <p class="texto-suave texto-pequeno">O cliente é avisado na conversa de que alteraste a proposta. Se a tinhas retirado, volta a ficar à espera de resposta.</p>
-      <button type="submit" class="botao botao-principal botao-largo">Guardar alterações da proposta</button>
-    </form>
-  </dialog>
-
-  <footer id="rodape" class="rodape"></footer>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js"></script>
-  <script src="app.js"></script>
-  <script>
-    const opcoes = (mapa, vazio) =>
-      (vazio ? `<option value="">${esc(vazio)}</option>` : "") +
-      Object.entries(mapa).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join("");
-
-    /* ─────────────── Cliente ─────────────── */
-
-    let meusProjetos = [];
-    let freelancers = [];
-
-    function mudarSeparador(nome) {
-      document.querySelectorAll('#vistaCliente [role="tab"]').forEach((t) => {
-        const ativo = t.id === "tab-" + nome;
-        t.setAttribute("aria-selected", ativo);
-        $(t.getAttribute("aria-controls")).hidden = !ativo;
-      });
-      history.replaceState(null, "", "#" + nome);
-    }
-    document.querySelectorAll('#vistaCliente [role="tab"]').forEach((t) =>
-      t.addEventListener("click", () => mudarSeparador(t.id.replace("tab-", "")))
-    );
-
-    function iniciarCliente(perfil) {
-      $("vistaCliente").hidden = false;
-      $("cOla").textContent = `Olá, ${perfil.nome}`;
-      $("pubCategoria").innerHTML = opcoes(CATEGORIAS, "Escolhe a área");
-      $("pubMoeda").innerHTML = opcoes(MOEDAS);
-      $("pubMoeda").value = perfil.moeda || "EUR";
-
-      const inicial = location.hash.replace("#", "");
-      if (["projetos", "publicar", "freelancers"].includes(inicial)) mudarSeparador(inicial);
-
-      carregarMeusProjetos();
-      aoMudar(["projetos", "propostas"], carregarMeusProjetos);
-      carregarFreelancers();
-
-      $("pesquisaFreelancers").addEventListener("input", desenharFreelancers);
-      $("formPublicar").addEventListener("submit", publicarProjeto);
-    }
-
-    function mostrarErroLista(id, e) {
-      console.error("[Work on Pan]", e);
-      $(id).innerHTML = `<div class="cartao vazio"><p>Não foi possível carregar esta lista. ${esc(traduzirErro(e))}</p></div>`;
-    }
-
-    async function carregarMeusProjetos() {
-      const { data, error } = await sb
-        .from("projetos")
-        .select(`*,
-          escolhido:perfis!projetos_freelancer_id_fkey(nome, sobrenome),
-          propostas(*, freelancer:perfis!propostas_freelancer_id_fkey(nome, sobrenome, area, competencias))`)
-        .eq("cliente_id", wopUser.id)
-        .order("criado_em", { ascending: false })
-        .order("criado_em", { referencedTable: "propostas", ascending: false });
-      if (error) return mostrarErroLista("listaMeusProjetos", error);
-      meusProjetos = data;
-      desenharMeusProjetos();
-    }
-
-    function desenharMeusProjetos() {
-      const conta = (estado) => meusProjetos.filter((p) => p.estado === estado).length;
-      $("cAbertos").textContent = conta("aberto");
-      $("cAndamento").textContent = conta("em_andamento");
-      $("cConcluidos").textContent = conta("concluido");
-      $("cPorResponder").textContent = meusProjetos
-        .filter((p) => p.estado === "aberto")
-        .reduce((n, p) => n + p.propostas.filter((pp) => pp.estado === "pendente").length, 0);
-
-      const alvo = $("listaMeusProjetos");
-      if (!meusProjetos.length) {
-        alvo.innerHTML = `
-          <div class="cartao vazio">
-            <h2>Ainda não publicaste nenhum projeto</h2>
-            <p>Descreve o trabalho, indica um orçamento e um prazo. Os freelancers enviam-te propostas e tu escolhes.</p>
-            <button class="botao botao-principal" onclick="mudarSeparador('publicar')">Publicar o primeiro projeto</button>
-          </div>`;
-        return;
-      }
-
-      alvo.innerHTML = meusProjetos.map((p) => {
-        const propostas = p.propostas.filter((pp) => pp.estado !== "retirada");
-        return `
-          <article class="cartao">
-            <div class="item-topo">
-              <div>
-                <h3>${esc(p.titulo)}</h3>
-                <ul class="meta">
-                  <li>${esc(nomeCategoria(p.categoria))}</li>
-                  <li>${esc(dinheiro(p.orcamento, p.moeda))}</li>
-                  <li>${esc(p.prazo_dias)} dias</li>
-                  <li>publicado ${esc(dataCurta(p.criado_em))}</li>
-                </ul>
-              </div>
-              ${etiqueta(ESTADOS_PROJETO, p.estado)}
-            </div>
-            <p class="item-descricao">${esc(p.descricao)}</p>
-            ${p.escolhido ? `<p style="margin: 10px 0 0">Freelancer escolhido: <strong>${esc(nomeCompleto(p.escolhido))}</strong></p>` : ""}
-            <div class="sub-lista">
-              <strong>${propostas.length ? `Propostas recebidas (${propostas.length})` : "Ainda sem propostas"}</strong>
-              ${propostas.length ? propostas.map((pp) => cartaoPropostaRecebida(p, pp)).join("")
-                : `<p class="texto-suave texto-pequeno" style="margin: 0">${p.estado === "aberto"
-                  ? "O projeto está visível em «Projetos abertos». Quando alguém enviar uma proposta, aparece aqui."
-                  : "Este projeto não está a receber propostas."}</p>`}
-            </div>
-            <div class="item-rodape">
-              <span class="texto-suave texto-pequeno">${acoesProjetoAjuda(p)}</span>
-              <div class="acoes">${acoesProjeto(p)}</div>
-            </div>
-          </article>`;
-      }).join("");
-    }
-
-    function cartaoPropostaRecebida(projeto, pp) {
-      const podeDecidir = projeto.estado === "aberto" && pp.estado === "pendente";
-      const nome = nomeCompleto(pp.freelancer);
-      return `
-        <div class="proposta">
-          <div class="item-topo">
-            <div class="pessoa">
-              <span class="avatar" aria-hidden="true">${esc(iniciais(nome))}</span>
-              <div>
-                <strong>${esc(nome)}</strong>${pp.freelancer?.area ? ` <span class="texto-suave texto-pequeno">· ${esc(nomeCategoria(pp.freelancer.area))}</span>` : ""}<br>
-                <span class="texto-suave texto-pequeno">${esc(dinheiro(pp.valor, pp.moeda))} · entrega em ${esc(pp.prazo_entrega)} dias · ${esc(dataCurta(pp.criado_em))}</span>
-              </div>
-            </div>
-            ${etiqueta(ESTADOS_PROPOSTA, pp.estado)}
-          </div>
-          <blockquote>${esc(pp.mensagem)}</blockquote>
-          <div class="acoes">
-            ${podeDecidir ? `
-              <button class="botao botao-principal botao-pequeno" onclick="responderProposta('${esc(pp.id)}', true)">Aceitar e começar o projeto</button>
-              <button class="botao botao-perigo botao-pequeno" onclick="responderProposta('${esc(pp.id)}', false)">Recusar</button>` : ""}
-            <button class="botao botao-secundario botao-pequeno" onclick="irParaConversa('${esc(pp.freelancer_id)}', '${esc(projeto.id)}')">Conversar com ${esc(pp.freelancer?.nome || "o freelancer")}</button>
-          </div>
-        </div>`;
-    }
-
-    function acoesProjetoAjuda(p) {
-      return {
-        aberto: "Fechar esconde o projeto de «Projetos abertos».",
-        em_andamento: "Quando o trabalho estiver entregue, marca-o como concluído.",
-        concluido: "Trabalho terminado.",
-        fechado: "Fechado: os freelancers já não o veem.",
-      }[p.estado] || "";
-    }
-
-    function acoesProjeto(p) {
-      const id = esc(p.id);
-      const apagar = `<button class="botao botao-perigo botao-pequeno" onclick="apagarProjeto('${id}')">Apagar projeto</button>`;
-      if (p.estado === "aberto")
-        return `<button class="botao botao-secundario botao-pequeno" onclick="mudarEstadoProjeto('${id}', 'fechado')">Fechar a novas propostas</button>${apagar}`;
-      if (p.estado === "fechado")
-        return `<button class="botao botao-secundario botao-pequeno" onclick="mudarEstadoProjeto('${id}', 'aberto')">Reabrir a propostas</button>${apagar}`;
-      if (p.estado === "em_andamento")
-        return `<button class="botao botao-secundario botao-pequeno" onclick="irParaConversa('${esc(p.freelancer_id)}', '${id}')">Falar com o freelancer</button>
-          <button class="botao botao-principal botao-pequeno" onclick="mudarEstadoProjeto('${id}', 'concluido')">Marcar como concluído</button>`;
-      return apagar;
-    }
-
-    async function publicarProjeto(ev) {
-      ev.preventDefault();
-      const msg = $("msgPublicar");
-      const erro = (t) => { msg.textContent = t; msg.className = "mensagem-form erro"; msg.hidden = false; };
-
-      const projeto = {
-        cliente_id: wopUser.id,
-        titulo: $("pubTitulo").value.trim(),
-        categoria: $("pubCategoria").value,
-        descricao: $("pubDescricao").value.trim(),
-        orcamento: Number($("pubOrcamento").value),
-        moeda: $("pubMoeda").value,
-        prazo_dias: Number($("pubPrazo").value),
-        competencias: listaCompetencias($("pubCompetencias").value, 12),
-      };
-
-      if (projeto.titulo.length < 5) return erro("Escreve um título com pelo menos 5 caracteres.");
-      if (!projeto.categoria) return erro("Escolhe a área do projeto.");
-      if (projeto.descricao.length < 30) return erro("A descrição está muito curta — explica um pouco mais (pelo menos 30 caracteres).");
-      if (!(projeto.orcamento > 0)) return erro("Indica um orçamento de referência.");
-      if (!(projeto.prazo_dias > 0 && projeto.prazo_dias <= 365)) return erro("Indica em quantos dias precisas do trabalho (1 a 365).");
-
-      const btn = $("btnPublicar");
-      btn.disabled = true;
-      btn.textContent = "A publicar…";
-      const { error } = await sb.from("projetos").insert(projeto);
-      btn.disabled = false;
-      btn.textContent = "Publicar projeto";
-      if (error) return erro("Não foi possível publicar. " + traduzirErro(error));
-
-      $("formPublicar").reset();
-      $("pubMoeda").value = projeto.moeda;
-      msg.hidden = true;
-      await carregarMeusProjetos();
-      mudarSeparador("projetos");
-      avisar("Projeto publicado. Já aparece em «Projetos abertos».");
-    }
-
-    async function mudarEstadoProjeto(id, estado) {
-      const textos = {
-        fechado: "Fechar este projeto? Deixa de aparecer aos freelancers e as propostas pendentes ficam fechadas. Podes reabri-lo depois.",
-        concluido: "Marcar como concluído? Confirma só depois de receberes o trabalho final.",
-      };
-      if (textos[estado] && !confirm(textos[estado])) return;
-      const { error } = await sb.from("projetos").update({ estado }).eq("id", id);
-      if (error) return avisar(traduzirErro(error), "erro");
-      await carregarMeusProjetos();
-      avisar({ aberto: "Projeto reaberto.", fechado: "Projeto fechado.", concluido: "Projeto concluído." }[estado]);
-    }
-
-    async function apagarProjeto(id) {
-      const p = meusProjetos.find((x) => x.id === id);
-      if (!confirm(`Apagar "${p.titulo}" de vez? As propostas recebidas também são apagadas.`)) return;
-      const { error } = await sb.from("projetos").delete().eq("id", id);
-      if (error) return avisar(traduzirErro(error), "erro");
-      await carregarMeusProjetos();
-      avisar("Projeto apagado.");
-    }
-
-    async function responderProposta(propostaId, aceitar) {
-      const projeto = meusProjetos.find((p) => p.propostas.some((pp) => pp.id === propostaId));
-      const pp = projeto.propostas.find((x) => x.id === propostaId);
-      const nome = nomeCompleto(pp.freelancer);
-      const outras = projeto.propostas.filter((x) => x.id !== pp.id && x.estado === "pendente").length;
-      const pergunta = aceitar
-        ? `Aceitar a proposta de ${nome} por ${dinheiro(pp.valor, pp.moeda)}?\n\n` +
-          "O projeto passa a «Em andamento» e deixa de receber propostas." +
-          (outras ? `\nAs outras ${outras} proposta(s) ficam fechadas.` : "")
-        : `Recusar a proposta de ${nome}? A pessoa vê a proposta como recusada.`;
-      if (!confirm(pergunta)) return;
-
-      const { error } = await sb.rpc("responder_proposta", { p_proposta: propostaId, p_aceitar: aceitar });
-      if (error) return avisar(traduzirErro(error), "erro");
-      await carregarMeusProjetos();
-      avisar(aceitar ? `Proposta de ${nome} aceite. Já podem falar em Mensagens.` : "Proposta recusada.");
-    }
-
-    async function carregarFreelancers() {
-      const { data, error } = await sb
-        .from("perfis")
-        .select("id, nome, sobrenome, area, bio, valor_hora, moeda, competencias, disponivel")
-        .eq("tipo", "freelancer")
-        .order("disponivel", { ascending: false })
-        .order("atualizado_em", { ascending: false });
-      if (error) return mostrarErroLista("listaFreelancers", error);
-      freelancers = data;
-      desenharFreelancers();
-    }
-
-    function desenharFreelancers() {
-      const termo = $("pesquisaFreelancers").value.trim().toLowerCase();
-      const lista = freelancers.filter((f) =>
-        !termo || [nomeCompleto(f), nomeCategoria(f.area), f.bio, ...f.competencias].join(" ").toLowerCase().includes(termo)
-      );
-      if (!freelancers.length) {
-        $("listaFreelancers").innerHTML = `<div class="cartao vazio" style="grid-column: 1 / -1">
-          <p>Ainda não há freelancers registados. Publica o teu projeto — quem se registar vai vê-lo.</p></div>`;
-        return;
-      }
-      if (!lista.length) {
-        $("listaFreelancers").innerHTML = `<div class="cartao vazio" style="grid-column: 1 / -1"><p>Ninguém corresponde a essa pesquisa.</p></div>`;
-        return;
-      }
-      $("listaFreelancers").innerHTML = lista.map((f) => `
-        <article class="cartao">
-          <div class="item-topo">
-            <div class="pessoa">
-              <span class="avatar" aria-hidden="true">${esc(iniciais(nomeCompleto(f)))}</span>
-              <div>
-                <h3>${esc(nomeCompleto(f))}</h3>
-                <span class="texto-suave texto-pequeno">${esc(f.area ? nomeCategoria(f.area) : "Área não indicada")}</span>
-              </div>
-            </div>
-            ${f.valor_hora ? `<span class="valor">${esc(dinheiro(f.valor_hora, f.moeda))}<span class="texto-suave texto-pequeno">/hora</span></span>` : ""}
-          </div>
-          <p class="item-descricao">${esc(f.bio || "Ainda sem apresentação.")}</p>
-          ${f.competencias.length ? `<ul class="competencias">${f.competencias.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>` : ""}
-          <div class="item-rodape">
-            <span class="texto-pequeno ${f.disponivel ? "" : "texto-suave"}">${f.disponivel ? "Disponível para novos projetos" : "Sem disponibilidade de momento"}</span>
-            <button class="botao botao-secundario botao-pequeno" onclick="irParaConversa('${esc(f.id)}')">Enviar mensagem</button>
-          </div>
-        </article>`).join("");
-    }
-
-    /* ─────────────── Freelancer ─────────────── */
-
-    let minhasPropostas = [];
-    let propostaEmEdicao = null;
-
-    function iniciarFreelancer(perfil) {
-      $("vistaFreelancer").hidden = false;
-      $("fOla").textContent = `Olá, ${perfil.nome}`;
-      $("avisoPerfil").hidden = Boolean(perfil.area && perfil.bio && perfil.competencias.length);
-
-      carregarPropostas();
-      contarProjetosAbertos();
-      aoMudar(["propostas"], carregarPropostas, `freelancer_id=eq.${wopUser.id}`);
-      aoMudar(["projetos"], contarProjetosAbertos);
-      $("formEditar").addEventListener("submit", guardarEdicao);
-    }
-
-    async function carregarPropostas() {
-      const { data, error } = await sb
-        .from("propostas")
-        .select("*, projeto:projetos(id, titulo, estado, cliente_id, cliente:perfis!projetos_cliente_id_fkey(nome, sobrenome, empresa))")
-        .eq("freelancer_id", wopUser.id)
-        .order("atualizado_em", { ascending: false });
-      if (error) return mostrarErroLista("listaPropostas", error);
-      minhasPropostas = data;
-      desenharPropostas();
-    }
-
-    async function contarProjetosAbertos() {
-      const { count } = await sb.from("projetos").select("id", { count: "exact", head: true }).eq("estado", "aberto");
-      $("fAbertos").textContent = count ?? "–";
-    }
-
-    function desenharPropostas() {
-      const n = (...estados) => minhasPropostas.filter((p) => estados.includes(p.estado)).length;
-      $("fPendentes").textContent = n("pendente");
-      $("fAceites").textContent = n("aceite");
-      $("fRecusadas").textContent = n("recusada", "fechada");
-
-      if (!minhasPropostas.length) {
-        $("listaPropostas").innerHTML = `
-          <div class="cartao vazio">
-            <h3>Ainda não enviaste propostas</h3>
-            <p>Vê os projetos abertos, escolhe um que saibas fazer bem e diz ao cliente como o farias.</p>
-            <a class="botao botao-principal" href="projetos.html">Ver projetos abertos</a>
-          </div>`;
-        return;
-      }
-
-      $("listaPropostas").innerHTML = minhasPropostas.map((pp) => {
-        const id = esc(pp.id);
-        const nota = {
-          pendente: "O cliente ainda não respondeu.",
-          aceite: "O cliente escolheu-te. Combinem os detalhes em Mensagens.",
-          recusada: "O cliente escolheu não avançar com esta proposta.",
-          fechada: "O projeto foi fechado ou entregue a outra pessoa.",
-          retirada: "Retiraste esta proposta. Se o projeto ainda estiver aberto, podes voltar a enviá-la.",
-        }[pp.estado] || "";
-        const podeReenviar = pp.estado === "retirada" && pp.projeto.estado === "aberto";
-        return `
-          <article class="cartao">
-            <div class="item-topo">
-              <div>
-                <h3>${esc(pp.projeto.titulo)}</h3>
-                <ul class="meta">
-                  <li>Cliente: ${esc(nomeCliente(pp.projeto.cliente))}</li>
-                  <li>${esc(dinheiro(pp.valor, pp.moeda))}</li>
-                  <li>entrega em ${esc(pp.prazo_entrega)} dias</li>
-                  <li>enviada ${esc(dataCurta(pp.criado_em))}</li>
-                </ul>
-              </div>
-              ${etiqueta(ESTADOS_PROPOSTA, pp.estado)}
-            </div>
-            <p class="item-descricao">${esc(pp.mensagem)}</p>
-            <div class="item-rodape">
-              <span class="texto-suave texto-pequeno">${esc(nota)}</span>
-              <div class="acoes">
-                <button class="botao botao-secundario botao-pequeno" onclick="irParaConversa('${esc(pp.projeto.cliente_id)}', '${esc(pp.projeto_id)}')">Falar com o cliente</button>
-                ${pp.estado === "pendente" || podeReenviar ? `
-                  <button class="botao botao-secundario botao-pequeno" onclick="editarProposta('${id}')">${podeReenviar ? "Voltar a enviar" : "Editar proposta"}</button>` : ""}
-                ${pp.estado === "pendente" ? `
-                  <button class="botao botao-perigo botao-pequeno" onclick="retirarProposta('${id}')">Retirar</button>` : ""}
-              </div>
-            </div>
-          </article>`;
-      }).join("");
-    }
-
-    function editarProposta(id) {
-      propostaEmEdicao = minhasPropostas.find((p) => p.id === id);
-      $("jeProjeto").textContent = propostaEmEdicao.projeto.titulo;
-      $("jeValor").value = propostaEmEdicao.valor;
-      $("jePrazo").value = propostaEmEdicao.prazo_entrega;
-      $("jeMensagem").value = propostaEmEdicao.mensagem;
-      $("msgEditar").hidden = true;
-      $("janelaEditar").showModal();
-    }
-
-    async function guardarEdicao(ev) {
-      ev.preventDefault();
-      const pp = propostaEmEdicao;
-      const valor = Number($("jeValor").value);
-      const prazo = Number($("jePrazo").value);
-      const mensagem = $("jeMensagem").value.trim();
-      const erro = (t) => { $("msgEditar").textContent = t; $("msgEditar").hidden = false; };
-      if (!(valor > 0) || !(prazo > 0 && prazo <= 365)) return erro("Valor e prazo têm de ser maiores que zero (prazo até 365 dias).");
-      if (mensagem.length < 20) return erro("A mensagem precisa de pelo menos 20 caracteres.");
-
-      const { error } = await sb.rpc("enviar_proposta", {
-        p_projeto: pp.projeto_id, p_valor: valor, p_moeda: pp.moeda, p_prazo: prazo, p_mensagem: mensagem,
-      });
-      if (error) return erro(traduzirErro(error));
-      $("janelaEditar").close();
-      await carregarPropostas();
-      avisar("Proposta atualizada. O cliente foi avisado na conversa.");
-    }
-
-    async function retirarProposta(id) {
-      const pp = minhasPropostas.find((p) => p.id === id);
-      if (!confirm(`Retirar a proposta para "${pp.projeto.titulo}"? O cliente deixa de a poder aceitar.`)) return;
-      const { error } = await sb.rpc("retirar_proposta", { p_proposta: id });
-      if (error) return avisar(traduzirErro(error), "erro");
-      await carregarPropostas();
-      avisar("Proposta retirada.");
-    }
-
-    /* ─────────────── Arranque ─────────────── */
-
-    exigirSessao((user, perfil) => {
-      $("aCarregar").remove();
-      const cliente = perfil.tipo === "cliente";
-      document.title = (cliente ? "Os meus projetos" : "As minhas propostas") + " · Work on Pan";
-      if (cliente) iniciarCliente(perfil);
-      else iniciarFreelancer(perfil);
-    });
-  </script>
+  <wop-rodape></wop-rodape>
 </body>
 </html>

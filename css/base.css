@@ -1,0 +1,420 @@
+/* Work on Pan — base: camadas, fontes, tokens, reset e tipografia.
+ *
+ * Ordem das camadas (as últimas ganham):
+ *   reset → tokens → base → componentes → paginas → utilitarios
+ *
+ * Tamanhos em rem: o tamanho de letra da raiz cresce com o ecrã
+ * (telemóvel → tablet → PC → TV) e tudo acompanha. */
+
+@layer reset, tokens, base, componentes, paginas, utilitarios;
+
+@font-face {
+  font-family: "Inter";
+  src: url("/fontes/inter-latin.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("/fontes/inter-latin-ext.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+1EF2-1EFF,
+    U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* Transição suave entre páginas (Chrome/Edge/Safari recentes; os outros ignoram). */
+@view-transition {
+  navigation: auto;
+}
+
+/* ── Reset ───────────────────────────────────────────────────── */
+
+@layer reset {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  * {
+    margin: 0;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    hanging-punctuation: first last;
+  }
+
+  img,
+  svg,
+  video {
+    display: block;
+    max-width: 100%;
+  }
+
+  input,
+  button,
+  textarea,
+  select {
+    font: inherit;
+    color: inherit;
+  }
+
+  p,
+  h1,
+  h2,
+  h3,
+  li {
+    overflow-wrap: break-word;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  [hidden] {
+    display: none !important;
+  }
+}
+
+/* ── Tokens (cores, espaço, movimento) ───────────────────────── */
+
+@layer tokens {
+  :root {
+    color-scheme: light dark;
+
+    /* Claro (por omissão). */
+    --fundo: #f7f8fa;
+    --superficie: #ffffff;
+    --superficie-2: #f1f3f6;
+    --superficie-3: #e8ecf1;
+    --tinta: #0f172a;
+    --tinta-2: #475569;
+    --tinta-3: #7c8aa0;
+    --linha: #e4e8ee;
+    --acento: #0d9488;
+    --acento-forte: #0f766e;
+    --acento-suave: #e6f6f4;
+    --acento-brilho: rgb(13 148 136 / 22%);
+    --sobre-acento: #ffffff;
+    --destaque: #f59e0b;
+    --aviso: #b45309;
+    --aviso-suave: #fef3e2;
+    --perigo: #dc2626;
+    --perigo-suave: #fdecec;
+    --ok: #15803d;
+    --ok-suave: #e8f7ee;
+    --mensagem-minha: #0d9488;
+    --topo-fundo: rgb(255 255 255 / 78%);
+    --sombra-1: 0 1px 2px rgb(15 23 42 / 5%);
+    --sombra-2: 0 1px 2px rgb(15 23 42 / 4%), 0 0.5rem 1.5rem rgb(15 23 42 / 7%);
+    --sombra-3: 0 1.5rem 3.75rem rgb(15 23 42 / 18%);
+
+    /* Forma e ritmo. */
+    --raio-g: 1.25rem;
+    --raio: 1rem;
+    --raio-m: 0.75rem;
+    --raio-p: 0.625rem;
+    --largura: 72rem;
+    --margem: clamp(1rem, 4vw, 2rem);
+    --espaco-secao: clamp(3rem, 8vw, 6rem);
+    --toque: 2.75rem; /* área mínima de toque */
+
+    /* Tipografia. */
+    --fonte: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --texto-xs: 0.78rem;
+    --texto-s: 0.88rem;
+    --texto-m: 1rem;
+    --texto-l: clamp(1.05rem, 0.9rem + 0.5vw, 1.2rem);
+    --titulo-3: 1.08rem;
+    --titulo-2: clamp(1.3rem, 1.1rem + 0.8vw, 1.75rem);
+    --titulo-1: clamp(1.9rem, 1.4rem + 2vw, 2.75rem);
+    --titulo-heroi: clamp(2.4rem, 1.5rem + 4.5vw, 4.75rem);
+
+    /* Movimento. */
+    --curva: cubic-bezier(0.2, 0.7, 0.2, 1);
+    --rapido: 0.15s;
+    --medio: 0.3s;
+    --lento: 0.55s;
+  }
+
+  /* Escuro: segue o sistema, a não ser que a pessoa tenha escolhido claro. */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --fundo: #0a0d12;
+      --superficie: #11161d;
+      --superficie-2: #19202a;
+      --superficie-3: #232c38;
+      --tinta: #eef2f7;
+      --tinta-2: #a3aebf;
+      --tinta-3: #6f7b8f;
+      --linha: #232b36;
+      --acento: #2dd4bf;
+      --acento-forte: #5eead4;
+      --acento-suave: rgb(45 212 191 / 12%);
+      --acento-brilho: rgb(45 212 191 / 25%);
+      --sobre-acento: #04201c;
+      --destaque: #fbbf24;
+      --aviso: #fbbf24;
+      --aviso-suave: rgb(251 191 36 / 12%);
+      --perigo: #f87171;
+      --perigo-suave: rgb(248 113 113 / 12%);
+      --ok: #4ade80;
+      --ok-suave: rgb(74 222 128 / 12%);
+      --mensagem-minha: #0f766e;
+      --topo-fundo: rgb(10 13 18 / 72%);
+      --sombra-1: 0 1px 2px rgb(0 0 0 / 40%);
+      --sombra-2: 0 1px 2px rgb(0 0 0 / 30%), 0 0.5rem 1.5rem rgb(0 0 0 / 35%);
+      --sombra-3: 0 1.5rem 3.75rem rgb(0 0 0 / 60%);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --fundo: #0a0d12;
+    --superficie: #11161d;
+    --superficie-2: #19202a;
+    --superficie-3: #232c38;
+    --tinta: #eef2f7;
+    --tinta-2: #a3aebf;
+    --tinta-3: #6f7b8f;
+    --linha: #232b36;
+    --acento: #2dd4bf;
+    --acento-forte: #5eead4;
+    --acento-suave: rgb(45 212 191 / 12%);
+    --acento-brilho: rgb(45 212 191 / 25%);
+    --sobre-acento: #04201c;
+    --destaque: #fbbf24;
+    --aviso: #fbbf24;
+    --aviso-suave: rgb(251 191 36 / 12%);
+    --perigo: #f87171;
+    --perigo-suave: rgb(248 113 113 / 12%);
+    --ok: #4ade80;
+    --ok-suave: rgb(74 222 128 / 12%);
+    --mensagem-minha: #0f766e;
+    --topo-fundo: rgb(10 13 18 / 72%);
+    --sombra-1: 0 1px 2px rgb(0 0 0 / 40%);
+    --sombra-2: 0 1px 2px rgb(0 0 0 / 30%), 0 0.5rem 1.5rem rgb(0 0 0 / 35%);
+    --sombra-3: 0 1.5rem 3.75rem rgb(0 0 0 / 60%);
+  }
+
+  :root[data-theme="light"] {
+    color-scheme: light;
+  }
+
+  /* Ecrãs grandes e TVs: tudo cresce a partir da raiz. */
+  @media (min-width: 1800px) {
+    :root {
+      --largura: 80rem;
+    }
+  }
+}
+
+/* ── Base ─────────────────────────────────────────────────────── */
+
+@layer base {
+  html {
+    /* 15px no telemóvel → 16px no PC; nas TVs sobe por patamares. */
+    font-size: clamp(93.75%, 0.4vw + 88%, 100%);
+    scroll-behavior: smooth;
+    scroll-padding-top: 5rem;
+  }
+
+  @media (min-width: 1800px) {
+    html { font-size: 112.5%; }
+  }
+
+  @media (min-width: 2400px) {
+    html { font-size: 137.5%; }
+  }
+
+  @media (min-width: 3200px) {
+    html { font-size: 175%; }
+  }
+
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    background: var(--fundo);
+    color: var(--tinta);
+    font-family: var(--fonte);
+    font-size: var(--texto-m);
+    line-height: 1.55;
+    font-feature-settings: "cv11", "ss01";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color var(--medio), color var(--medio);
+  }
+
+  main {
+    flex: 1;
+    width: 100%;
+    max-width: var(--largura);
+    margin-inline: auto;
+    padding: clamp(1.5rem, 4vw, 2.75rem) var(--margem) clamp(3rem, 6vw, 4.5rem);
+    view-transition-name: conteudo;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.4em;
+  }
+
+  h1 { font-size: var(--titulo-1); letter-spacing: -0.035em; }
+  h2 { font-size: var(--titulo-2); letter-spacing: -0.025em; }
+  h3 { font-size: var(--titulo-3); font-weight: 650; }
+
+  p {
+    margin-bottom: 1em;
+  }
+
+  p:last-child {
+    margin-bottom: 0;
+  }
+
+  a {
+    color: var(--acento);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
+    transition: color var(--rapido);
+
+    &:hover {
+      color: var(--acento-forte);
+    }
+  }
+
+  ul,
+  ol {
+    padding-left: 1.25em;
+  }
+
+  ::selection {
+    background: var(--acento-brilho);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--acento);
+    outline-offset: 2px;
+    border-radius: 0.25rem;
+  }
+
+  /* TVs e comandos: foco bem visível. */
+  @media (min-width: 1800px) {
+    :focus-visible {
+      outline-width: 3px;
+      outline-offset: 4px;
+    }
+  }
+
+  code {
+    font-size: 0.9em;
+    padding: 0.1em 0.35em;
+    border-radius: 0.3em;
+    background: var(--superficie-2);
+  }
+
+  @keyframes entrar-pagina {
+    from { opacity: 0; transform: translateY(0.5rem); }
+  }
+
+  @keyframes surgir {
+    from { opacity: 0; transform: translateY(0.75rem) scale(0.985); }
+  }
+
+  @keyframes aparecer {
+    from { opacity: 0; }
+  }
+
+  @keyframes janela-abrir {
+    from { opacity: 0; transform: translateY(1rem) scale(0.97); }
+  }
+
+  @keyframes brilho {
+    from { background-position: -200% 0; }
+    to { background-position: 200% 0; }
+  }
+
+  @keyframes pulsar {
+    50% { transform: scale(1.15); }
+  }
+
+  @keyframes flutuar {
+    50% { transform: translateY(-0.5rem); }
+  }
+
+  main {
+    animation: entrar-pagina var(--lento) var(--curva) both;
+  }
+
+  /* Entre páginas o cabeçalho fica parado e só o conteúdo muda (cross-fade). */
+  ::view-transition-group(conteudo) {
+    animation-duration: 0.25s;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after,
+    ::view-transition-group(*),
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      animation-delay: 0ms !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* ── Utilitários ─────────────────────────────────────────────── */
+
+@layer utilitarios {
+  .texto-suave { color: var(--tinta-2); }
+  .texto-pequeno { font-size: var(--texto-s); }
+  .centrado { text-align: center; }
+
+  .so-leitores {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .saltar {
+    position: absolute;
+    left: 1rem;
+    top: -4rem;
+    z-index: 100;
+    padding: 0.6rem 1rem;
+    border-radius: var(--raio-p);
+    background: var(--tinta);
+    color: var(--fundo);
+    font-weight: 600;
+    transition: top var(--rapido);
+
+    &:focus {
+      top: 1rem;
+      color: var(--fundo);
+    }
+  }
+}
