@@ -22,19 +22,23 @@
   <wop-topo></wop-topo>
 
   <main id="conteudo">
-    <header class="cabecalho-pagina">
+    <header class="cabecalho-pagina cabecalho-com-icone">
+      <span class="titulo-icone"><wop-icone nome="projetos"></wop-icone></span>
       <h1>Projetos abertos</h1>
       <p id="introducao">Trabalhos publicados por clientes que ainda estão a escolher freelancer.
         Abre um projeto para ler os detalhes e enviar a tua proposta.</p>
     </header>
 
-    <search>
+    <search class="caixa-filtros">
       <form class="filtros" id="filtros">
         <div class="campo">
           <label for="pesquisa">Procurar</label>
-          <input type="search" id="pesquisa" name="pesquisa" placeholder="Palavra no título, descrição ou competência" autocomplete="off">
+          <div class="entrada-icone">
+            <wop-icone nome="pesquisar"></wop-icone>
+            <input type="search" id="pesquisa" name="pesquisa" placeholder="Palavra no título, descrição ou competência" autocomplete="off">
+          </div>
         </div>
-        <div class="campo">
+        <div class="campo campo-area">
           <label for="filtroCategoria">Área</label>
           <select id="filtroCategoria" name="area"></select>
         </div>
@@ -56,6 +60,7 @@
           </select>
         </div>
       </form>
+      <div class="atalhos-areas" id="atalhosAreas" role="group" aria-label="Filtrar por área"></div>
     </search>
 
     <p id="contagem" class="texto-suave texto-pequeno" aria-live="polite">A carregar projetos…</p>

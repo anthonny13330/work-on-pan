@@ -4,6 +4,9 @@ import { sb } from "../nucleo/supabase.js";
 import { sessao, sessaoPronta, destinoDepoisDeEntrar } from "../nucleo/sessao.js";
 import { $, aCarregar } from "../nucleo/ui.js";
 import { traduzirErro } from "../nucleo/formato.js";
+import { ligarSenhas } from "../nucleo/senha.js";
+
+ligarSenhas();
 
 const destino = destinoDepoisDeEntrar();
 const caixa = $("#mensagem");
@@ -48,7 +51,7 @@ $("#btnRecuperar").addEventListener("click", async () => {
   const email = $("#email").value.trim();
   if (!email) {
     $("#email").focus();
-    return mostrar("Escreve primeiro o teu e-mail no campo acima.");
+    return mostrar("Escreve primeiro o teu e-mail e carrega outra vez em «Esqueci-me».");
   }
   const { error } = await sb.auth.resetPasswordForEmail(email, {
     redirectTo: new URL("/conta?recuperar=1", location.origin).href,

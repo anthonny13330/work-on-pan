@@ -20,35 +20,54 @@
 <body>
   <wop-topo></wop-topo>
 
-  <main id="conteudo">
-    <div class="entrada">
-      <header class="entrada-cabecalho">
-        <wop-logo tamanho="60"></wop-logo>
-        <h1>Entrar</h1>
-        <p>Usa o e-mail com que criaste a conta. Vais para o teu painel: clientes veem os seus projetos,
-          freelancers as suas propostas.</p>
-      </header>
+  <main id="conteudo" class="entrada-pagina">
+    <div class="entrada-dupla">
+      <div class="entrada">
+        <header class="entrada-cabecalho">
+          <wop-logo tamanho="56"></wop-logo>
+          <h1>Bom regresso</h1>
+          <p>Entra com o e-mail da tua conta. Vais direto ao painel: clientes veem os seus projetos,
+            freelancers as suas propostas.</p>
+        </header>
 
-      <form class="cartao" id="formEntrar" novalidate>
-        <div id="mensagem" role="alert" hidden></div>
-        <div class="campo">
-          <label for="email">E-mail</label>
-          <input type="email" id="email" name="email" autocomplete="email" inputmode="email" required>
-        </div>
-        <div class="campo">
-          <label for="senha">Palavra-passe</label>
-          <input type="password" id="senha" name="senha" autocomplete="current-password" required>
-        </div>
-        <button type="submit" class="botao botao-principal botao-largo">Entrar na minha conta</button>
-        <p class="texto-pequeno texto-suave" style="margin-top: 1rem">
-          <button type="button" class="botao-texto" id="btnRecuperar">Esqueci-me da palavra-passe</button>
-          — enviamos um link para o e-mail acima.
+        <form class="cartao cartao-formulario" id="formEntrar" novalidate>
+          <div id="mensagem" role="alert" hidden></div>
+          <div class="campo">
+            <label for="email">E-mail</label>
+            <div class="entrada-icone">
+              <wop-icone nome="email"></wop-icone>
+              <input type="email" id="email" name="email" autocomplete="email" inputmode="email" required placeholder="nome@exemplo.pt">
+            </div>
+          </div>
+          <div class="campo">
+            <div class="rotulo-com-acao">
+              <label for="senha">Palavra-passe</label>
+              <button type="button" class="botao-texto" id="btnRecuperar">Esqueci-me</button>
+            </div>
+            <div class="entrada-icone campo-senha">
+              <wop-icone nome="cadeado"></wop-icone>
+              <input type="password" id="senha" name="senha" autocomplete="current-password" required>
+            </div>
+          </div>
+          <button type="submit" class="botao botao-principal botao-largo botao-grande">Entrar na minha conta <wop-icone nome="seta"></wop-icone></button>
+          <p class="nota-formulario"><wop-icone nome="escudo"></wop-icone> Ligação cifrada. Nunca te pedimos a palavra-passe por e-mail.</p>
+        </form>
+
+        <p class="texto-suave centrado" style="margin-top: 1.25rem">
+          Ainda não tens conta? <a href="/registar">Cria uma de cliente ou freelancer</a>.
         </p>
-      </form>
+      </div>
 
-      <p class="texto-suave centrado" style="margin-top: 1.25rem">
-        Ainda não tens conta? <a href="/registar">Cria uma conta de cliente ou freelancer</a>.
-      </p>
+      <aside class="entrada-montra" aria-label="O que te espera">
+        <wop-logo tamanho="150"></wop-logo>
+        <h2>A cozinha continua como a deixaste.</h2>
+        <ul>
+          <li><wop-icone nome="painel"></wop-icone><span><strong>O teu painel</strong> Projetos, propostas e o estado de cada um.</span></li>
+          <li><wop-icone nome="mensagens"></wop-icone><span><strong>Mensagens</strong> As conversas continuam onde ficaram.</span></li>
+          <li><wop-icone nome="notificacoes"></wop-icone><span><strong>Sem perder nada</strong> O que chegou enquanto estavas fora aparece marcado.</span></li>
+        </ul>
+        <p class="letra-mao">é bom ver-te!</p>
+      </aside>
     </div>
   </main>
 

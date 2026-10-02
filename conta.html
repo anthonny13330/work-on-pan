@@ -21,25 +21,27 @@
 <body>
   <wop-topo></wop-topo>
 
-  <main id="conteudo" style="max-width: 50rem">
-    <header class="cabecalho-pagina">
-      <h1>A minha conta</h1>
-      <p>Conta de <strong id="tipoConta">…</strong> com o e-mail <strong id="emailConta">…</strong>.</p>
+  <main id="conteudo" class="conta-pagina">
+    <header class="faixa-conta">
+      <span class="avatar avatar-grande" id="avatarConta" aria-hidden="true">?</span>
+      <div>
+        <h1 id="nomeConta">A minha conta</h1>
+        <p>Conta de <strong id="tipoConta">…</strong> · <span id="emailConta">…</span></p>
+      </div>
     </header>
 
-    <nav class="indice" aria-label="Nesta página" style="margin-bottom: 1.25rem">
-      <ol>
-        <li><a href="#perfil">Perfil público</a></li>
-        <li><a href="#dados">Dados privados</a></li>
-        <li><a href="#aparencia">Aparência</a></li>
-        <li><a href="#seguranca">Palavra-passe</a></li>
-        <li><a href="#privacidade">Os meus dados (RGPD)</a></li>
-      </ol>
+    <div class="conta-grelha">
+    <nav class="indice-conta" aria-label="Nesta página">
+      <a href="#perfil"><wop-icone nome="perfil"></wop-icone> Perfil público</a>
+      <a href="#dados"><wop-icone nome="cadeado"></wop-icone> Dados privados</a>
+      <a href="#aparencia"><wop-icone nome="paleta"></wop-icone> Aparência</a>
+      <a href="#seguranca"><wop-icone nome="escudo"></wop-icone> Palavra-passe</a>
+      <a href="#privacidade"><wop-icone nome="descarregar"></wop-icone> Os meus dados</a>
     </nav>
 
     <div class="lista">
       <section id="perfil" class="cartao">
-        <h2>Perfil público</h2>
+        <h2 class="titulo-secao-icone"><wop-icone nome="perfil"></wop-icone> Perfil público</h2>
         <p class="texto-suave texto-pequeno" id="perfilExplicacao" style="margin-bottom: 1rem"></p>
         <form id="formPerfil" novalidate>
           <div class="linha-campos">
@@ -103,17 +105,17 @@
       </section>
 
       <section id="dados" class="cartao">
-        <h2>Dados privados</h2>
+        <h2 class="titulo-secao-icone"><wop-icone nome="cadeado"></wop-icone> Dados privados</h2>
         <p class="texto-suave texto-pequeno" style="margin-bottom: 1rem">Só tu vês estes dados.</p>
         <form id="formDados" novalidate>
           <div class="campo">
             <label for="email">E-mail de acesso</label>
-            <input type="email" id="email" disabled>
+            <div class="entrada-icone"><wop-icone nome="email"></wop-icone><input type="email" id="email" disabled></div>
             <span class="ajuda">Para mudar o e-mail, escreve-nos para o contacto indicado no rodapé.</span>
           </div>
           <div class="campo">
             <label for="telefone">Telefone <span class="texto-suave">(opcional)</span></label>
-            <input type="tel" id="telefone" name="telefone" autocomplete="tel" maxlength="20">
+            <div class="entrada-icone"><wop-icone nome="telefone"></wop-icone><input type="tel" id="telefone" name="telefone" autocomplete="tel" maxlength="20"></div>
             <span class="ajuda">Só é usado se precisarmos de te contactar sobre a conta.</span>
           </div>
           <button type="submit" class="botao botao-secundario">Guardar dados privados</button>
@@ -121,53 +123,53 @@
       </section>
 
       <section id="aparencia" class="cartao">
-        <h2>Aparência</h2>
-        <div class="campo" style="max-width: 20rem; margin: 0.75rem 0 0">
-          <label for="tema">Tema</label>
-          <select id="tema">
-            <option value="sistema">Igual ao do meu dispositivo</option>
-            <option value="claro">Claro</option>
-            <option value="escuro">Escuro</option>
-          </select>
-          <span class="ajuda">Muda logo. Fica guardado só neste navegador.</span>
-        </div>
+        <h2 class="titulo-secao-icone"><wop-icone nome="paleta"></wop-icone> Aparência</h2>
+        <fieldset class="escolha-tema" id="tema">
+          <legend class="so-leitores">Tema</legend>
+          <label><input type="radio" name="tema" value="sistema"><span class="amostra amostra-sistema"></span><span>Igual ao dispositivo</span></label>
+          <label><input type="radio" name="tema" value="claro"><span class="amostra amostra-claro"></span><span>Pedra e cobre (claro)</span></label>
+          <label><input type="radio" name="tema" value="escuro"><span class="amostra amostra-escuro"></span><span>Ferro fundido (escuro)</span></label>
+        </fieldset>
+        <p class="ajuda" style="margin-top: 0.75rem">Muda logo. Fica guardado só neste navegador.</p>
       </section>
 
       <section id="seguranca" class="cartao">
-        <h2 id="tituloSenha">Mudar palavra-passe</h2>
+        <h2 id="tituloSenha" class="titulo-secao-icone"><wop-icone nome="escudo"></wop-icone> Mudar palavra-passe</h2>
         <form id="formSenha" novalidate style="margin-top: 0.75rem">
           <div class="campo" id="campoSenhaAtual">
             <label for="senhaAtual">Palavra-passe atual</label>
-            <input type="password" id="senhaAtual" name="atual" autocomplete="current-password">
+            <div class="entrada-icone campo-senha"><wop-icone nome="cadeado"></wop-icone><input type="password" id="senhaAtual" name="atual" autocomplete="current-password"></div>
           </div>
           <div class="linha-campos">
             <div class="campo">
               <label for="senhaNova">Nova palavra-passe</label>
-              <input type="password" id="senhaNova" name="nova" autocomplete="new-password" minlength="8">
-              <span class="ajuda">Pelo menos 8 caracteres.</span>
+              <div class="entrada-icone campo-senha"><wop-icone nome="cadeado"></wop-icone><input type="password" id="senhaNova" name="nova" autocomplete="new-password" minlength="8"></div>
             </div>
             <div class="campo">
               <label for="senhaRepetir">Repete a nova</label>
-              <input type="password" id="senhaRepetir" name="repetir" autocomplete="new-password">
+              <div class="entrada-icone campo-senha"><wop-icone nome="cadeado"></wop-icone><input type="password" id="senhaRepetir" name="repetir" autocomplete="new-password"></div>
+              <p class="confere" data-confere-com="senhaNova" data-confere-campo="senhaRepetir" aria-live="polite"></p>
             </div>
           </div>
+          <div class="forca" data-forca-de="senhaNova"></div>
           <button type="submit" class="botao botao-secundario">Mudar palavra-passe</button>
         </form>
       </section>
 
       <section id="privacidade" class="cartao">
-        <h2>Os meus dados (RGPD)</h2>
+        <h2 class="titulo-secao-icone"><wop-icone nome="descarregar"></wop-icone> Os meus dados (RGPD)</h2>
         <p class="texto-suave">Podes receber uma cópia de tudo o que guardamos sobre ti e apagar a conta a qualquer
           momento. Lê a <a href="/privacidade">política de privacidade</a> para saber o que é guardado e porquê.</p>
 
         <h3 style="margin-top: 1.25rem">Descarregar os meus dados</h3>
         <p class="texto-suave texto-pequeno">Um ficheiro JSON com a tua conta, perfil, projetos, propostas e mensagens.</p>
-        <button type="button" class="botao botao-secundario" id="btnExportar" style="margin-top: 0.5rem">Descarregar cópia dos meus dados</button>
+        <button type="button" class="botao botao-secundario" id="btnExportar" style="margin-top: 0.5rem"><wop-icone nome="descarregar"></wop-icone> Descarregar cópia dos meus dados</button>
 
         <h3 style="margin-top: 1.5rem">Apagar a conta</h3>
         <p class="texto-suave texto-pequeno" id="textoApagar"></p>
-        <button type="button" class="botao botao-perigo" id="btnApagar" style="margin-top: 0.5rem; border-color: var(--perigo-suave)">Apagar a minha conta</button>
+        <button type="button" class="botao botao-perigo" id="btnApagar" style="margin-top: 0.5rem; border-color: var(--perigo-suave)"><wop-icone nome="lixo"></wop-icone> Apagar a minha conta</button>
       </section>
+    </div>
     </div>
   </main>
 

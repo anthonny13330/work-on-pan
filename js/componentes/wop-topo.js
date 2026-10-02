@@ -1,10 +1,11 @@
-// <wop-topo> — cabeçalho com navegação conforme quem está a ver.
+// <wop-topo> — cabeçalho em ilha: marca à esquerda, navegação numa pílula ao centro,
+// tema e ação principal à direita. Ao rolar, o cabeçalho inteiro vira uma ilha flutuante.
+// No telemóvel, o menu abre como um cartão flutuante por baixo.
 import { html, render, nothing } from "../nucleo/html.js";
 import { sessao, sessaoPronta, sair, aoMudar, contarPorLer } from "../nucleo/sessao.js";
 import { alternarTema } from "../nucleo/ui.js";
 
-const iconeSol = html`<wop-icone class="icone-sol" nome="tema-claro"></wop-icone>`;
-const iconeLua = html`<wop-icone class="icone-lua" nome="tema-escuro"></wop-icone>`;
+const icone = (nome) => html`<wop-icone nome=${nome}></wop-icone>`;
 
 class WopTopo extends HTMLElement {
   #aberto = false;
@@ -19,9 +20,16 @@ class WopTopo extends HTMLElement {
       if (sessao.user) this.#vigiarMensagens();
     });
 
-    addEventListener("scroll", () => this.classList.toggle("rolado", scrollY > 4), { passive: true });
-    // Fecha o menu do telemóvel com Escape ou ao mudar para ecrã largo.
+    // Um marcador invisível no topo da página diz quando já se rolou (sem ouvir cada «scroll»).
+    const sentinela = document.createElement("div");
+    sentinela.className = "topo-sentinela";
+    sentinela.setAttribute("aria-hidden", "true");
+    document.body.prepend(sentinela);
+    new IntersectionObserver(([e]) => this.classList.toggle("rolado", !e.isIntersecting)).observe(sentinela);
+
+    // Fecha o menu do telemóvel com Escape, ao clicar fora ou ao mudar para ecrã largo.
     addEventListener("keydown", (e) => e.key === "Escape" && this.#fecharMenu());
+    addEventListener("click", (e) => this.#aberto && !this.contains(e.target) && this.#fecharMenu());
     matchMedia("(min-width: 960px)").addEventListener("change", () => this.#fecharMenu());
   }
 
@@ -42,9 +50,9 @@ class WopTopo extends HTMLElement {
     this.desenhar();
   }
 
-  #ligacao(caminho, texto, extra = nothing) {
+  #ligacao(caminho, texto, nomeIcone, extra = nothing) {
     const atual = location.pathname.replace(/\.html$/, "").replace(/\/$/, "") || "/";
-    return html`<a href=${caminho} aria-current=${atual === caminho ? "page" : nothing}>${texto}${extra}</a>`;
+    return html`<a href=${caminho} aria-current=${atual === caminho ? "page" : nothing}>${icone(nomeIcone)}<span>${texto}</span>${extra}</a>`;
   }
 
   #ligacoes() {
@@ -52,9 +60,11 @@ class WopTopo extends HTMLElement {
     const { perfil } = sessao;
     if (!perfil) {
       return html`
-        ${this.#ligacao("/projetos", "Projetos abertos")}
-        ${this.#ligacao("/entrar", "Entrar")}
-        <a class="botao botao-principal botao-pequeno" href="/registar">Criar conta</a>
+        ${this.#ligacao("/", "Início", "inicio")}
+        ${this.#ligacao("/projetos", "Projetos abertos", "projetos")}
+        <a href="/#como-funciona">${icone("info")}<span>Como funciona</span></a>
+        ${this.#ligacao("/entrar", "Entrar", "perfil")}
+        <a class="botao botao-principal so-menu-movel" href="/registar">Criar conta grátis</a>
       `;
     }
     const cliente = perfil.tipo === "cliente";
@@ -62,12 +72,20 @@ class WopTopo extends HTMLElement {
       ? html`<span class="contador" aria-label="${this.#porLer} por ler">${this.#porLer}</span>`
       : nothing;
     return html`
-      ${this.#ligacao("/painel", cliente ? "Os meus projetos" : "As minhas propostas")}
-      ${this.#ligacao("/projetos", cliente ? "Projetos publicados" : "Procurar projetos")}
-      ${this.#ligacao("/mensagens", "Mensagens", contador)}
-      ${this.#ligacao("/conta", "A minha conta")}
-      <button type="button" @click=${sair}>Sair</button>
+      ${this.#ligacao("/painel", cliente ? "Os meus projetos" : "As minhas propostas", "painel")}
+      ${this.#ligacao("/projetos", cliente ? "Projetos" : "Procurar projetos", "pesquisar")}
+      ${this.#ligacao("/mensagens", "Mensagens", "mensagens", contador)}
+      ${this.#ligacao("/conta", "Conta", "perfil")}
+      <button type="button" class="so-menu-movel" @click=${sair}>${icone("sair")}<span>Sair</span></button>
     `;
+  }
+
+  #acoes() {
+    if (!this.#pronto) return nothing;
+    if (!sessao.perfil) {
+      return html`<a class="botao botao-escuro-tema botao-pequeno so-largo" href="/registar">Criar conta ${icone("seta")}</a>`;
+    }
+    return html`<button type="button" class="botao-icone so-largo" @click=${sair} title="Sair da conta" aria-label="Sair da conta">${icone("sair")}</button>`;
   }
 
   desenhar() {
@@ -78,18 +96,21 @@ class WopTopo extends HTMLElement {
           <a href=${sessao.perfil ? "/painel" : "/"} class="marca" aria-label="Work on Pan — início">
             <wop-logo tamanho="34" nome></wop-logo>
           </a>
-          <button type="button" class="botao-icone botao-tema" @click=${alternarTema}
-            title="Mudar entre tema claro e escuro" aria-label="Mudar entre tema claro e escuro">
-            ${iconeSol}${iconeLua}
-          </button>
-          <button type="button" class="botao-icone botao-menu" aria-controls="menuPrincipal"
-            aria-expanded=${this.#aberto} aria-label=${this.#aberto ? "Fechar menu" : "Abrir menu"}
-            @click=${() => { this.#aberto = !this.#aberto; this.desenhar(); }}>
-            <span class="barras"></span>
-          </button>
           <nav id="menuPrincipal" class="menu ${this.#aberto ? "aberto" : ""}" aria-label="Principal">
             ${this.#ligacoes()}
           </nav>
+          <div class="topo-acoes">
+            <button type="button" class="botao-icone botao-tema" @click=${alternarTema}
+              title="Mudar entre tema claro e escuro" aria-label="Mudar entre tema claro e escuro">
+              <wop-icone class="icone-sol" nome="tema-claro"></wop-icone><wop-icone class="icone-lua" nome="tema-escuro"></wop-icone>
+            </button>
+            ${this.#acoes()}
+            <button type="button" class="botao-icone botao-menu" aria-controls="menuPrincipal"
+              aria-expanded=${this.#aberto} aria-label=${this.#aberto ? "Fechar menu" : "Abrir menu"}
+              @click=${() => { this.#aberto = !this.#aberto; this.desenhar(); }}>
+              <span class="barras"></span>
+            </button>
+          </div>
         </div>
       `,
       this
