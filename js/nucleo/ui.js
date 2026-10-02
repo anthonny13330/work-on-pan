@@ -44,7 +44,7 @@ export function alternarTema() {
 }
 
 // A barra do browser no telemóvel acompanha o tema escolhido.
-const COR_BARRA = { light: "#f7f8fa", dark: "#0a0d12" };
+const COR_BARRA = { light: "#f4f1ec", dark: "#141210" };
 
 function atualizarCorDoNavegador() {
   const escolhido = document.documentElement.dataset.theme; // undefined = segue o sistema
@@ -58,7 +58,7 @@ function atualizarCorDoNavegador() {
 
 let caixaAviso;
 
-export function avisar(texto, tipo = "ok") {
+export function avisar(texto, tipo = "ok", { vapor = false } = {}) {
   if (!caixaAviso) {
     caixaAviso = document.createElement("div");
     caixaAviso.setAttribute("role", "status");
@@ -70,6 +70,7 @@ export function avisar(texto, tipo = "ok") {
   requestAnimationFrame(() => caixaAviso.classList.add("visivel"));
   clearTimeout(caixaAviso.temporizador);
   caixaAviso.temporizador = setTimeout(() => caixaAviso.classList.remove("visivel"), 4200);
+  if (vapor) setTimeout(() => vaporar(caixaAviso), 380);
 }
 
 /* ── Janelas (substituem confirm() e prompt()) ───────────────── */
@@ -151,8 +152,54 @@ export function animarEntrada(el) {
   setTimeout(() => el.classList.remove("entrar"), 1000);
 }
 
-export const esqueletos = (n, curto = false) =>
-  Array.from({ length: n }, () => html`<div class="esqueleto ${curto ? "curto" : ""}" aria-hidden="true"></div>`);
+// Panela no carregamento: o aro de latão gira e o vapor desenha o W.
+// Só aparece se a espera passar de 400 ms (atraso feito em CSS).
+const SETA = "M4 4L22 9.6L15.2 12.6L12.6 15.2L9.6 22Z";
+const W = "M29 32.5C30.6 37.4 32 41 33.5 43.5C35 41 36.5 37.8 38 35.5C39.5 37.8 41 41 42.5 43.5C44 41 45.4 37.4 47 32.5";
+
+export const carregador = (texto = "A pôr ao lume…") => html`
+  <div class="carregador" role="status">
+    <svg viewBox="0 0 64 64" aria-hidden="true">
+      <path d="M13 13L25 25" stroke="currentColor" stroke-width="6.4" stroke-linecap="round" />
+      <path d=${SETA} fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+      <circle cx="38" cy="38" r="21" class="carregador-corpo" />
+      <circle cx="38" cy="38" r="15.5" class="carregador-fundo" />
+      <circle class="carregador-aro" cx="38" cy="38" r="24.6" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="26 129" />
+      <path class="carregador-vapor" pathLength="100" d=${W} fill="none" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+    <span>${texto}</span>
+  </div>
+`;
+
+export const esqueletos = (n, curto = false) => [
+  carregador(),
+  ...Array.from({ length: n }, () => html`<div class="esqueleto ${curto ? "curto" : ""}" aria-hidden="true"></div>`),
+];
+
+// Vapor ao publicar: três fios sobem do botão. Só em momentos raros
+// (publicar, proposta aceite, conta criada). Sem efeito com «reduzir movimento».
+export function vaporar(origem) {
+  if (!origem || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const r = origem.getBoundingClientRect();
+  if (!r.width) return;
+  const caixa = document.createElement("div");
+  caixa.className = "fumos";
+  caixa.setAttribute("aria-hidden", "true");
+  caixa.style.left = `${r.left}px`;
+  caixa.style.top = `${r.top}px`;
+  caixa.style.width = `${r.width}px`;
+  caixa.innerHTML = [
+    [30, 52],
+    [48, 64],
+    [66, 46],
+  ]
+    .map(
+      ([x, h]) => `<svg class="fumo" style="left:${x}%" width="16" height="${h}" viewBox="0 0 16 ${h}"><path pathLength="100" d="M8 ${h - 2}C3 ${h * 0.75} 13 ${h * 0.55} 8 ${h * 0.35}S5 ${h * 0.1} 9 2" fill="none" stroke-width="2.2" stroke-linecap="round"/></svg>`
+    )
+    .join("");
+  document.body.append(caixa);
+  setTimeout(() => caixa.remove(), 1600);
+}
 
 export const etiqueta = (mapa, estado) => {
   const e = mapa[estado] || { texto: estado, classe: "etiqueta-neutra" };
@@ -163,14 +210,8 @@ export const etiquetaProjeto = (estado) => etiqueta(ESTADOS_PROJETO, estado);
 export const etiquetaProposta = (estado) => etiqueta(ESTADOS_PROPOSTA, estado);
 
 // Pequena ilustração para estados vazios (linhas simples, segue a cor do tema).
-export const ilustracaoVazio = html`
-  <svg class="ilustracao" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5"
-    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-    <rect x="10" y="14" width="44" height="36" rx="8" />
-    <path d="M10 26h44M22 38h20" />
-    <circle cx="50" cy="14" r="6" fill="currentColor" stroke="none" opacity="0.25" />
-  </svg>
-`;
+// Estados vazios: a panela vazia, vista de cima.
+export const ilustracaoVazio = html`<wop-logo class="ilustracao" tamanho="72"></wop-logo>`;
 
 export function estadoVazio({ titulo, texto, acao }) {
   return html`
@@ -196,10 +237,12 @@ export async function aCarregar(botao, texto, acao) {
   const original = botao.textContent;
   botao.disabled = true;
   botao.textContent = texto;
+  botao.classList.add("a-carregar");
   try {
     return await acao();
   } finally {
     botao.disabled = false;
     botao.textContent = original;
+    botao.classList.remove("a-carregar");
   }
 }

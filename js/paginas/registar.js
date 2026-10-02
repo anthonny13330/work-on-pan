@@ -2,7 +2,7 @@ import "../arranque.js";
 import { html, pintar } from "../nucleo/html.js";
 import { sb } from "../nucleo/supabase.js";
 import { sessao, sessaoPronta } from "../nucleo/sessao.js";
-import { $, aCarregar, mostrarMensagem } from "../nucleo/ui.js";
+import { $, aCarregar, mostrarMensagem, vaporar } from "../nucleo/ui.js";
 import { CATEGORIAS, MOEDAS, listaCompetencias, traduzirErro } from "../nucleo/formato.js";
 
 const form = $("#formRegisto");
@@ -75,6 +75,7 @@ form.addEventListener("submit", async (evento) => {
     `,
     form
   );
+  vaporar(form.querySelector("wop-logo"));
 });
 
 await sessaoPronta;

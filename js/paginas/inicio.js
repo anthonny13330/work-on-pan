@@ -1,48 +1,24 @@
 import "../arranque.js";
-import { html, pintar, nothing } from "../nucleo/html.js";
+import { html, pintar } from "../nucleo/html.js";
 import { sb } from "../nucleo/supabase.js";
 import { sessao, sessaoPronta } from "../nucleo/sessao.js";
 import { $, avisar, animarEntrada, esqueletos, estadoVazio } from "../nucleo/ui.js";
-import { dinheiro, dataCurta, nomeCategoria, nomeCliente } from "../nucleo/formato.js";
+import { dinheiro, dataCurta, nomeCategoria, nomeCliente, plural } from "../nucleo/formato.js";
 
 const CAMPOS = "id, titulo, descricao, categoria, orcamento, moeda, prazo_dias, competencias, criado_em, cliente:perfis!projetos_cliente_id_fkey(nome, sobrenome, empresa)";
 
-const cartaoProjeto = (p, compacto = false) => html`
-  <article class="cartao">
-    <div class="item-topo">
-      <div>
-        <p class="sobretitulo">${nomeCategoria(p.categoria)}</p>
-        <h3><a class="item-titulo" href="/projetos?p=${p.id}">${p.titulo}</a></h3>
-      </div>
+// Cartão de projeto acabado de sair: ícone da área a espreitar por cima.
+const cartaoProjeto = (p) => html`
+  <article class="cartao cartao-recente">
+    <span class="cartao-icone"><wop-icone nome=${p.categoria}></wop-icone></span>
+    <p class="cartao-linha-topo"><span>${nomeCategoria(p.categoria)}</span><span>${dataCurta(p.criado_em)}</span></p>
+    <h3><a class="item-titulo" href="/projetos?p=${p.id}">${p.titulo}</a></h3>
+    <p class="item-descricao">${p.descricao}</p>
+    <p class="cartao-linha-base">
       <span class="valor">${dinheiro(p.orcamento, p.moeda)}</span>
-    </div>
-    ${compacto ? nothing : html`<p class="item-descricao">${p.descricao}</p>`}
-    <ul class="meta">
-      <li>${p.prazo_dias} dias</li>
-      <li>${nomeCliente(p.cliente)}</li>
-      <li>${dataCurta(p.criado_em)}</li>
-    </ul>
+      <span>${p.prazo_dias} dias · ${nomeCliente(p.cliente)}</span>
+    </p>
   </article>
-`;
-
-// Se ainda não há projetos, a montra mostra exemplos — e diz que o são.
-const EXEMPLOS = [
-  { titulo: "Loja online para cerâmica artesanal", categoria: "dev", orcamento: 1500, prazo_dias: 30 },
-  { titulo: "Logótipo e cartões para uma padaria", categoria: "design", orcamento: 350, prazo_dias: 10 },
-  { titulo: "Textos para o site de uma clínica", categoria: "redacao", orcamento: 400, prazo_dias: 14 },
-];
-
-const cartaoExemplo = (p) => html`
-  <div class="cartao" aria-hidden="true">
-    <div class="item-topo">
-      <div>
-        <p class="sobretitulo">Exemplo · ${nomeCategoria(p.categoria)}</p>
-        <h3>${p.titulo}</h3>
-      </div>
-      <span class="valor">${dinheiro(p.orcamento)}</span>
-    </div>
-    <ul class="meta"><li>${p.prazo_dias} dias</li></ul>
-  </div>
 `;
 
 async function carregar() {
@@ -57,11 +33,6 @@ async function carregar() {
   const lista = projetos.data || [];
 
   pintar(
-    lista.length ? lista.slice(0, 3).map((p) => cartaoProjeto(p, true)) : EXEMPLOS.map(cartaoExemplo),
-    $("#montra")
-  );
-
-  pintar(
     lista.length
       ? lista.map((p) => cartaoProjeto(p))
       : estadoVazio({
@@ -74,23 +45,33 @@ async function carregar() {
   animarEntrada($("#recentes"));
 
   if (nProjetos.count || nFreelancers.count) {
+    const n = nProjetos.count ?? 0;
+    const f = nFreelancers.count ?? 0;
     pintar(
-      html`
-        <li><strong>${nProjetos.count ?? 0}</strong><span>projetos abertos</span></li>
-        <li><strong>${nFreelancers.count ?? 0}</strong><span>freelancers registados</span></li>
-      `,
+      html`<span class="ponto-vivo" aria-hidden="true"></span>
+        <span>${n
+          ? html`<strong>${plural(n, "projeto", "projetos")}</strong> ao lume agora · ${plural(f, "freelancer", "freelancers")}`
+          : html`<strong>${plural(f, "freelancer", "freelancers")}</strong> à espera do teu projeto`}</span>`,
       $("#numeros")
     );
+    $("#numeros").hidden = false;
   }
 }
 
 // Quem já tem conta vê um atalho para o painel em vez de «criar conta».
 sessaoPronta.then(() => {
   if (!sessao.perfil) return;
-  const painel = html`<a class="botao botao-principal botao-grande" href="/painel">Ir para o meu painel</a>
-    <a class="botao botao-secundario botao-grande" href="/projetos">Ver projetos</a>`;
-  pintar(painel, $("#acoesHeroi"));
-  pintar(painel, $("#acoesFinal"));
+  pintar(
+    html`<a class="botao botao-heroi botao-grande" href="/painel"><wop-icone nome="projetos"></wop-icone> Ir para o meu painel</a>
+      <a class="botao botao-heroi-contorno botao-grande" href="/projetos"><wop-icone nome="pesquisar"></wop-icone> Ver projetos</a>`,
+    $("#acoesHeroi")
+  );
+  pintar(
+    html`<a class="botao botao-escuro botao-grande" href="/painel">Ir para o meu painel</a>
+      <a class="botao botao-escuro-contorno botao-grande" href="/projetos">Ver projetos</a>`,
+    $("#acoesFinal")
+  );
+  document.querySelector(".anotacao")?.remove();
 });
 
 if (new URLSearchParams(location.search).has("conta-apagada")) {

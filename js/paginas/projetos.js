@@ -74,7 +74,7 @@ const cartao = (p) => html`
   <article class="cartao">
     <div class="item-topo">
       <div>
-        <p class="sobretitulo">${nomeCategoria(p.categoria)}</p>
+        <p class="sobretitulo com-icone"><wop-icone nome=${p.categoria}></wop-icone>${nomeCategoria(p.categoria)}</p>
         <h3><a class="item-titulo" href="?p=${p.id}" @click=${(e) => abrirProjeto(p.id, e)}>${p.titulo}</a></h3>
       </div>
       <span class="valor">${dinheiro(p.orcamento, p.moeda)}</span>
@@ -162,7 +162,7 @@ function desenharJanela() {
       <div class="dialog-corpo">
         <div class="dialog-cabecalho">
           <div>
-            <p class="sobretitulo">${nomeCategoria(p.categoria)}</p>
+            <p class="sobretitulo com-icone"><wop-icone nome=${p.categoria}></wop-icone>${nomeCategoria(p.categoria)}</p>
             <h2 id="jpTitulo">${p.titulo}</h2>
           </div>
           <button type="button" class="fechar" aria-label="Fechar" @click=${() => janela.close()}>×</button>

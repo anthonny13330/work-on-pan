@@ -8,11 +8,12 @@
   <meta property="og:title" content="Work on Pan">
   <meta property="og:description" content="Encontra quem faça. Faz o que sabes. Projetos e freelancers em português.">
   <meta property="og:type" content="website">
-  <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0a0d12" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f4f1ec" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#141210" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="/logo.svg" type="image/svg+xml">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="preload" href="/fontes/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fontes/space-grotesk-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/css/base.css">
   <link rel="stylesheet" href="/css/componentes.css">
   <link rel="stylesheet" href="/css/paginas.css">
@@ -26,93 +27,123 @@
 
   <main id="conteudo">
     <section class="heroi" aria-labelledby="tituloHeroi">
-      <div class="faixa heroi-interior" style="padding-block: 0">
-        <div>
-          <p class="sobretitulo">Trabalho independente, em português</p>
-          <h1 id="tituloHeroi">Encontra quem faça. <em>Faz o que sabes.</em></h1>
-          <p class="heroi-texto">Publica o que precisas e recebe propostas de freelancers com preço e prazo à vista.
+      <div class="heroi-cartao" data-cursor-panela>
+        <div class="heroi-texto-bloco">
+          <p class="pilula-contorno"><wop-icone nome="idioma"></wop-icone> Trabalho independente, em português</p>
+          <h1 id="tituloHeroi">Encontra quem faça. <span class="marcador">Faz</span> o que sabes.</h1>
+          <p class="heroi-texto">Publica o que precisas e recebe propostas com preço e prazo à vista.
             Ou mostra o que sabes fazer e responde aos projetos que te interessam.</p>
           <div class="acoes" id="acoesHeroi">
-            <a class="botao botao-principal botao-grande" href="/registar?tipo=cliente">Publicar um projeto</a>
-            <a class="botao botao-secundario botao-grande" href="/projetos">Procurar trabalho</a>
+            <a class="botao botao-heroi botao-grande" href="/registar?tipo=cliente"><wop-icone nome="publicar"></wop-icone> Publicar um projeto</a>
+            <a class="botao botao-heroi-contorno botao-grande" href="/projetos"><wop-icone nome="pesquisar"></wop-icone> Procurar trabalho</a>
           </div>
-          <p class="heroi-nota">Gratuito · Sem comissões · Dados guardados na União Europeia</p>
-          <ul class="numeros" id="numeros" aria-label="Números da plataforma"></ul>
+          <p class="anotacao" aria-hidden="true">
+            <svg viewBox="0 0 70 54"><path d="M60 48C44 46 26 34 16 10"/><path d="M9 18L16 8L23 17"/></svg>
+            <span class="letra-mao">começa aqui, é grátis</span>
+          </p>
+          <p class="heroi-estado" id="numeros" hidden></p>
         </div>
-        <div class="heroi-montra" id="montra" aria-label="Projetos recentes"></div>
+
+        <div class="heroi-ilustracao" aria-hidden="true">
+          <svg class="heroi-panela" viewBox="0 0 560 520">
+            <ellipse class="orbita" cx="320" cy="290" rx="250" ry="96" transform="rotate(-14 320 290)"/>
+            <ellipse class="orbita tracejada" cx="320" cy="280" rx="206" ry="150" transform="rotate(16 320 280)"/>
+            <g transform="translate(110 76) scale(6)">
+              <path class="cabo" d="M13 13L25 25" stroke-width="6.4" stroke-linecap="round"/>
+              <path class="cabo-seta" d="M4 4L22 9.6L15.2 12.6L12.6 15.2L9.6 22Z" stroke-width="1.6" stroke-linejoin="round"/>
+              <circle class="corpo" cx="38" cy="38" r="21" stroke-width=".5"/>
+              <circle class="fundo-panela" cx="38" cy="38" r="15.5" stroke-width=".35"/>
+              <path class="reflexo" d="M55.2 44.3A18.3 18.3 0 0 1 44.3 55.2" stroke-width=".9" stroke-linecap="round"/>
+              <path class="vapor" d="M29 32.5C30.6 37.4 32 41 33.5 43.5C35 41 36.5 37.8 38 35.5C39.5 37.8 41 41 42.5 43.5C44 41 45.4 37.4 47 32.5" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle class="rebite" cx="25.7" cy="25.7" r="1.5"/>
+            </g>
+            <path class="estrela" d="M60 140l5 15 15 5-15 5-5 15-5-15-15-5 15-5z"/>
+            <path class="estrela cobre" d="M500 96l3.5 10.5 10.5 3.5-10.5 3.5-3.5 10.5-3.5-10.5-10.5-3.5 10.5-3.5z"/>
+            <circle class="bolinha" cx="86" cy="420" r="9"/>
+          </svg>
+          <span class="ficha" style="--x: 4%; --y: 48%; --r: -8deg"><wop-icone nome="pesquisar"></wop-icone></span>
+          <span class="ficha ficha-manteiga" style="--x: 86%; --y: 62%; --r: 7deg"><wop-icone nome="mensagens"></wop-icone></span>
+          <span class="ficha" style="--x: 30%; --y: 85%; --r: -3deg"><wop-icone nome="orcamento"></wop-icone></span>
+          <span class="ficha" style="--x: 74%; --y: 6%; --r: 10deg"><wop-icone nome="prazo"></wop-icone></span>
+        </div>
+
+        <svg class="autocolante" viewBox="0 0 120 120" role="img" aria-label="Sem comissões, gratuito">
+          <defs><path id="circuloAutocolante" d="M60 60m-42 0a42 42 0 1 1 84 0a42 42 0 1 1-84 0"/></defs>
+          <circle cx="60" cy="60" r="56" fill="#c8733a"/>
+          <circle cx="60" cy="60" r="50" fill="none" stroke="#141210" stroke-width="1.2" stroke-dasharray="3 4"/>
+          <text font-size="11" font-weight="700" letter-spacing="2.4" fill="#141210"><textPath href="#circuloAutocolante">SEM COMISSÕES · GRATUITO ·</textPath></text>
+          <text x="60" y="70" text-anchor="middle" font-size="30" font-weight="700" fill="#141210">0%</text>
+        </svg>
       </div>
     </section>
 
+    <nav class="faixa-areas" aria-label="Áreas de trabalho">
+      <div class="faixa-areas-fita">
+        <a href="/projetos?area=design">Design</a><span class="faisca" aria-hidden="true"></span>
+        <a href="/projetos?area=dev">Desenvolvimento</a><span class="faisca" aria-hidden="true"></span>
+        <a href="/projetos?area=marketing">Marketing</a><span class="faisca" aria-hidden="true"></span>
+        <a href="/projetos?area=redacao">Redação</a><span class="faisca" aria-hidden="true"></span>
+        <a href="/projetos?area=video">Vídeo</a><span class="faisca" aria-hidden="true"></span>
+        <a href="/projetos?area=dados">Dados</a>
+      </div>
+    </nav>
+
     <section class="faixa" id="como-funciona" aria-labelledby="tituloComo">
-      <div class="titulo-secao revelar">
-        <p class="sobretitulo">Como funciona</p>
-        <h2 id="tituloComo">Três passos de cada lado</h2>
+      <div class="cabecalho-secao-grande revelar">
+        <h2 id="tituloComo">Como funciona, <span class="sublinhado-mao">em três passos</span></h2>
         <p>Sem leilões nem algoritmos opacos: quem publica escolhe, quem propõe sabe sempre em que ponto está.</p>
       </div>
-      <div class="papeis">
-        <article class="cartao revelar">
-          <p class="sobretitulo">Para quem precisa</p>
-          <h3>Tens um trabalho para fazer</h3>
-          <ol class="passos">
-            <li><span><strong>Descreve o trabalho</strong>O que precisas, um orçamento de referência e o prazo.</span></li>
-            <li><span><strong>Recebe propostas</strong>Cada freelancer diz quanto cobra, em quantos dias entrega e como o faria.</span></li>
-            <li><span><strong>Escolhe e combina</strong>Aceitas uma proposta, as outras fecham sozinhas e continuam a conversa em Mensagens.</span></li>
+      <div class="bento">
+        <article class="bento-cliente revelar">
+          <div class="bento-topo"><p class="sobretitulo">Para quem precisa</p><wop-icone nome="publicar"></wop-icone></div>
+          <ol class="passos-grandes">
+            <li><strong>Põe ao lume</strong><span>O que precisas, um orçamento de referência e o prazo.</span></li>
+            <li><strong>Recebe propostas</strong><span>Preço, prazo e como cada freelancer o faria.</span></li>
+            <li><strong>Serve</strong><span>Aceitas uma, as outras fecham sozinhas e a conversa segue em Mensagens.</span></li>
           </ol>
           <a class="botao botao-principal" href="/registar?tipo=cliente">Criar conta de cliente</a>
         </article>
-        <article class="cartao revelar">
-          <p class="sobretitulo">Para quem faz</p>
-          <h3>Sabes fazer e queres trabalho</h3>
-          <ol class="passos">
-            <li><span><strong>Cria o teu perfil</strong>Área, uma apresentação curta e as ferramentas que dominas.</span></li>
-            <li><span><strong>Escolhe projetos</strong>Filtra por área e orçamento; lê os detalhes antes de decidir.</span></li>
-            <li><span><strong>Envia a proposta</strong>Podes editá-la ou retirá-la enquanto o cliente não responde.</span></li>
-          </ol>
-          <a class="botao botao-secundario" href="/registar?tipo=freelancer">Criar conta de freelancer</a>
-        </article>
-      </div>
-    </section>
-
-    <section class="faixa faixa-alternada" aria-labelledby="tituloRecentes" style="max-width: none">
-      <div style="max-width: var(--largura); margin-inline: auto">
-        <div class="cabecalho-secao" style="margin-top: 0">
-          <div>
-            <p class="sobretitulo">Agora mesmo</p>
-            <h2 id="tituloRecentes">Projetos à procura de quem os faça</h2>
+        <article class="bento-freelancer revelar">
+          <div class="bento-topo">
+            <p class="sobretitulo">Para quem faz</p>
+            <a href="/registar?tipo=freelancer">Criar conta de freelancer <wop-icone nome="seta"></wop-icone></a>
           </div>
-          <a class="botao botao-secundario" href="/projetos">Ver todos os projetos</a>
+          <ol class="passos-linha">
+            <li><strong>Cria o perfil</strong><span>Área, uma apresentação curta e as ferramentas que dominas.</span></li>
+            <li><strong>Escolhe projetos</strong><span>Filtra por área e orçamento; lê os detalhes antes de decidir.</span></li>
+            <li><strong>Envia a proposta</strong><span>Edita ou retira enquanto o cliente não responde.</span></li>
+          </ol>
+        </article>
+        <figure class="bento-citacao revelar">
+          <wop-icone nome="mensagens"></wop-icone>
+          <blockquote class="letra-mao">«Sem leilões nem algoritmos: falas com a pessoa.»</blockquote>
+        </figure>
+        <div class="bento-zero revelar">
+          <strong>0 €</strong>
+          <p>Para publicar, propor e conversar. O valor combinado é todo entre vocês.</p>
         </div>
-        <div class="lista-grelha" id="recentes"></div>
       </div>
     </section>
 
-    <section class="faixa" aria-labelledby="tituloGarantias">
-      <div class="titulo-secao revelar">
-        <p class="sobretitulo">O que podes esperar</p>
-        <h2 id="tituloGarantias">Feito com cuidado, sem letras pequenas</h2>
+    <section class="faixa" aria-labelledby="tituloRecentes">
+      <div class="cabecalho-secao">
+        <h2 id="tituloRecentes">Acabados de sair do <span class="marcador">forno</span></h2>
+        <a class="botao botao-secundario" href="/projetos">Ver todos os projetos <wop-icone nome="seta"></wop-icone></a>
       </div>
-      <ul class="garantias">
-        <li class="revelar">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg>
-          <h3>Privacidade a sério</h3>
-          <p>Dados guardados na UE. Descarregas ou apagas tudo o que é teu quando quiseres, num clique.</p>
-        </li>
-        <li class="revelar">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>
-          <h3>Tudo numa conversa</h3>
-          <p>Proposta, resposta e combinações ficam no mesmo histórico — útil se alguma coisa correr mal.</p>
-        </li>
-        <li class="revelar">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15 9.5c-.6-1-1.7-1.5-3-1.5-1.7 0-3 1-3 2.3 0 3 6 1.7 6 4.6 0 1.3-1.3 2.3-3 2.3-1.4 0-2.6-.6-3.1-1.6M12 6.5V8M12 16.9v1.6"/></svg>
-          <h3>Sem comissões</h3>
-          <p>O valor combinado é entre ti e a outra pessoa. A plataforma não fica com uma parte.</p>
-        </li>
-        <li class="revelar">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H8l-4 4z"/><path d="M8 9h8M8 12h5"/></svg>
-          <h3>Em português, de verdade</h3>
-          <p>Feito para quem trabalha em português — de Portugal ao Brasil — com euros, reais e outras moedas.</p>
-        </li>
-      </ul>
+      <div class="lista-grelha lista-recentes" id="recentes"></div>
+    </section>
+
+    <section class="faixa garantias" aria-labelledby="tituloGarantias">
+      <div>
+        <p class="sobretitulo">Sem letras pequenas</p>
+        <h2 id="tituloGarantias">Feito com cuidado, como uma boa receita.</h2>
+      </div>
+      <ol class="pilulas">
+        <li><wop-icone nome="escudo"></wop-icone><span><strong>Privacidade a sério.</strong> Dados na União Europeia; descarregas ou apagas tudo num clique.</span></li>
+        <li><wop-icone nome="mensagens"></wop-icone><span><strong>Tudo numa conversa.</strong> Proposta, resposta e combinações no mesmo histórico.</span></li>
+        <li><wop-icone nome="orcamento"></wop-icone><span><strong>Sem comissões.</strong> O valor combinado é entre ti e a outra pessoa.</span></li>
+        <li><wop-icone nome="idioma"></wop-icone><span><strong>Em português, de verdade.</strong> De Portugal ao Brasil, com euros, reais e outras moedas.</span></li>
+      </ol>
     </section>
 
     <section class="faixa" aria-labelledby="tituloPerguntas" style="padding-top: 0">
@@ -146,14 +177,18 @@
       </div>
     </section>
 
-    <section class="faixa chamada-final" aria-labelledby="tituloFinal" style="padding-top: 0">
-      <div class="cartao revelar">
-        <h2 id="tituloFinal">O próximo projeto começa aqui</h2>
+    <section class="chamada-final" aria-labelledby="tituloFinal" data-cursor-panela>
+      <div class="chamada-texto">
+        <h2 id="tituloFinal">O próximo projeto começa aqui.</h2>
         <p>Cria a conta em menos de um minuto. Se mudares de ideias, apagas tudo com um clique.</p>
         <div class="acoes" id="acoesFinal">
-          <a class="botao botao-principal botao-grande" href="/registar">Criar conta grátis</a>
-          <a class="botao botao-secundario botao-grande" href="/projetos">Ver projetos primeiro</a>
+          <a class="botao botao-escuro botao-grande" href="/registar">Criar conta grátis</a>
+          <a class="botao botao-escuro-contorno botao-grande" href="/projetos">Ver projetos primeiro</a>
         </div>
+      </div>
+      <div class="chamada-desenho" aria-hidden="true">
+        <wop-logo tamanho="220" mono></wop-logo>
+        <span class="letra-mao">até já!</span>
       </div>
     </section>
   </main>

@@ -31,12 +31,20 @@ js/
   arranque.js          importado por todas as páginas: componentes + tema
   tema-inicial.js      corre antes de pintar, para não piscar no tema errado
   nucleo/              supabase, sessão, modelos HTML (lit-html), formatação, interface
-  componentes/         <wop-topo>, <wop-rodape>, <wop-logo> (Web Components)
+  componentes/         <wop-topo>, <wop-rodape>, <wop-logo>, <wop-icone> e o cursor-panela (Web Components)
   paginas/             um módulo por página
 vendor/                lit-html e supabase-js servidos pelo próprio site (sem CDN)
-fontes/                Inter (variável, auto-alojada)
+fontes/                Inter (texto), Space Grotesk (títulos) e Kalam (anotações), auto-alojadas
 supabase/esquema.sql   esquema completo da base de dados
 ```
+
+**Identidade visual**
+
+- Paleta «cobre e ferro fundido»: escuro `#141210` com cobre `#C8733A`; claro em pedra `#F4F1EC` com cobre escuro `#A4561F`. Tudo em tokens no `base.css`.
+- Logótipo: uma panela vista de cima; o cabo é a seta do rato e o vapor desenha o W. Abaixo de 24 px usa a versão ótica.
+- Ícones literais com um único pormenor a cobre (`<wop-icone nome="…">`).
+- Marcador amarelo só em títulos, um por ecrã, com o texto sempre carvão.
+- Surpresas: panela no carregamento (`carregador()`) e vapor ao publicar (`vaporar()`). O cursor-panela só aparece em zonas com `data-cursor-panela`, com rato. Tudo se desliga com «reduzir movimento».
 
 **Princípios**
 

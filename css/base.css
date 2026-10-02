@@ -26,6 +26,43 @@
     U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 
+@font-face {
+  font-family: "Space Grotesk";
+  src: url("/fontes/space-grotesk-latin.woff2") format("woff2");
+  font-weight: 300 700;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Space Grotesk";
+  src: url("/fontes/space-grotesk-latin-ext.woff2") format("woff2");
+  font-weight: 300 700;
+  font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+1EF2-1EFF,
+    U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* Letra de mão: só para uma anotação por página. */
+@font-face {
+  font-family: "Kalam";
+  src: url("/fontes/kalam-latin.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Kalam";
+  src: url("/fontes/kalam-latin-ext.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+1EF2-1EFF,
+    U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
 /* Transição suave entre páginas (Chrome/Edge/Safari recentes; os outros ignoram). */
 @view-transition {
   navigation: auto;
@@ -94,38 +131,50 @@
   :root {
     color-scheme: light dark;
 
-    /* Claro (por omissão). */
-    --fundo: #f7f8fa;
+    /* Claro (por omissão): «Pedra e cobre». */
+    --fundo: #f4f1ec;
     --superficie: #ffffff;
-    --superficie-2: #f1f3f6;
-    --superficie-3: #e8ecf1;
-    --tinta: #0f172a;
-    --tinta-2: #475569;
-    --tinta-3: #7c8aa0;
-    --linha: #e4e8ee;
-    --acento: #0d9488;
-    --acento-forte: #0f766e;
-    --acento-suave: #e6f6f4;
-    --acento-brilho: rgb(13 148 136 / 22%);
+    --superficie-2: #efe9e0;
+    --superficie-3: #e0d8cc;
+    --tinta: #1c1714;
+    --tinta-2: #5c524a;
+    --tinta-3: #6e645b;
+    --linha: #e0d8cc;
+    --acento: #a4561f;
+    --acento-forte: #7e3f14;
+    --acento-suave: #f6e7da;
+    --acento-brilho: rgb(200 115 58 / 22%);
     --sobre-acento: #ffffff;
-    --destaque: #f59e0b;
-    --aviso: #b45309;
-    --aviso-suave: #fef3e2;
-    --perigo: #dc2626;
-    --perigo-suave: #fdecec;
-    --ok: #15803d;
-    --ok-suave: #e8f7ee;
-    --mensagem-minha: #0d9488;
-    --topo-fundo: rgb(255 255 255 / 78%);
-    --sombra-1: 0 1px 2px rgb(15 23 42 / 5%);
-    --sombra-2: 0 1px 2px rgb(15 23 42 / 4%), 0 0.5rem 1.5rem rgb(15 23 42 / 7%);
-    --sombra-3: 0 1.5rem 3.75rem rgb(15 23 42 / 18%);
+    --ligacao: #a4561f;
+    --cobre: #c8733a; /* só formas e títulos grandes, nunca texto corrido */
+    --cobre-fundo: #8a4519;
+    --latao: #d4a94f;
+    --marcador: #f2d08a; /* texto por cima é sempre carvão */
+    --destaque: #d4a94f;
+    --aviso: #8a5a0b;
+    --aviso-suave: #fbf0d9;
+    --perigo: #b42318;
+    --perigo-suave: #fdecea;
+    --ok: #3e6b39;
+    --ok-suave: #e7f0e4;
+    --mensagem-minha: #a4561f;
+    --topo-fundo: rgb(244 241 236 / 82%);
+    /* Blocos em contraste (o herói escuro no tema claro e vice-versa). */
+    --inverso-fundo: #1c1714;
+    --inverso-tinta: #f3ece2;
+    --inverso-tinta-2: #b9aea2;
+    --inverso-linha: #36302a;
+    --inverso-destaque: #f2d08a;
+    --sombra-1: 0 1px 2px rgb(28 23 20 / 6%);
+    --sombra-2: 0 1px 2px rgb(28 23 20 / 5%), 0 0.6rem 1.6rem rgb(28 23 20 / 8%);
+    --sombra-3: 0 1.5rem 3.75rem rgb(28 23 20 / 20%);
 
     /* Forma e ritmo. */
-    --raio-g: 1.25rem;
-    --raio: 1rem;
-    --raio-m: 0.75rem;
-    --raio-p: 0.625rem;
+    --raio-g: 1.75rem;
+    --raio: 1.25rem;
+    --raio-m: 0.9rem;
+    --raio-p: 0.75rem;
+    --raio-torto: 1.75rem 1.75rem 4.5rem 1.75rem; /* um canto diferente: a assinatura */
     --largura: 72rem;
     --margem: clamp(1rem, 4vw, 2rem);
     --espaco-secao: clamp(3rem, 8vw, 6rem);
@@ -133,79 +182,92 @@
 
     /* Tipografia. */
     --fonte: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --fonte-titulos: "Space Grotesk", var(--fonte);
+    --fonte-mao: "Kalam", "Segoe Print", cursive;
     --texto-xs: 0.78rem;
     --texto-s: 0.88rem;
     --texto-m: 1rem;
     --texto-l: clamp(1.05rem, 0.9rem + 0.5vw, 1.2rem);
-    --titulo-3: 1.08rem;
-    --titulo-2: clamp(1.3rem, 1.1rem + 0.8vw, 1.75rem);
-    --titulo-1: clamp(1.9rem, 1.4rem + 2vw, 2.75rem);
-    --titulo-heroi: clamp(2.4rem, 1.5rem + 4.5vw, 4.75rem);
+    --titulo-3: 1.12rem;
+    --titulo-2: clamp(1.5rem, 1.2rem + 1.2vw, 2.25rem);
+    --titulo-1: clamp(2rem, 1.4rem + 2.6vw, 3.25rem);
+    --titulo-heroi: clamp(2.6rem, 1.4rem + 5.4vw, 6rem);
 
     /* Movimento. */
     --curva: cubic-bezier(0.2, 0.7, 0.2, 1);
+    --curva-suave: cubic-bezier(0.65, 0, 0.35, 1);
     --rapido: 0.15s;
     --medio: 0.3s;
     --lento: 0.55s;
   }
 
-  /* Escuro: segue o sistema, a não ser que a pessoa tenha escolhido claro. */
+  /* Escuro: «Ferro fundido». Segue o sistema, a não ser que a pessoa tenha escolhido claro. */
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --fundo: #0a0d12;
-      --superficie: #11161d;
-      --superficie-2: #19202a;
-      --superficie-3: #232c38;
-      --tinta: #eef2f7;
-      --tinta-2: #a3aebf;
-      --tinta-3: #6f7b8f;
-      --linha: #232b36;
-      --acento: #2dd4bf;
-      --acento-forte: #5eead4;
-      --acento-suave: rgb(45 212 191 / 12%);
-      --acento-brilho: rgb(45 212 191 / 25%);
-      --sobre-acento: #04201c;
-      --destaque: #fbbf24;
-      --aviso: #fbbf24;
-      --aviso-suave: rgb(251 191 36 / 12%);
-      --perigo: #f87171;
-      --perigo-suave: rgb(248 113 113 / 12%);
-      --ok: #4ade80;
-      --ok-suave: rgb(74 222 128 / 12%);
-      --mensagem-minha: #0f766e;
-      --topo-fundo: rgb(10 13 18 / 72%);
+      --fundo: #141210;
+      --superficie: #1d1a17;
+      --superficie-2: #27231f;
+      --superficie-3: #36302a;
+      --tinta: #f3ece2;
+      --tinta-2: #b9aea2;
+      --tinta-3: #8e8378;
+      --linha: #36302a;
+      --acento: #c8733a;
+      --acento-forte: #e08f55;
+      --acento-suave: rgb(200 115 58 / 14%);
+      --acento-brilho: rgb(200 115 58 / 28%);
+      --sobre-acento: #141210;
+      --ligacao: #e08f55;
+      --aviso: #e0b25a;
+      --aviso-suave: rgb(212 169 79 / 14%);
+      --perigo: #f08a7e;
+      --perigo-suave: rgb(240 138 126 / 13%);
+      --ok: #8fbf89;
+      --ok-suave: rgb(127 163 122 / 15%);
+      --mensagem-minha: #8a4519;
+      --topo-fundo: rgb(20 18 16 / 80%);
+      --inverso-fundo: #f3ece2;
+      --inverso-tinta: #1c1714;
+      --inverso-tinta-2: #5c524a;
+      --inverso-linha: #d6ccbe;
+      --inverso-destaque: #a4561f;
       --sombra-1: 0 1px 2px rgb(0 0 0 / 40%);
-      --sombra-2: 0 1px 2px rgb(0 0 0 / 30%), 0 0.5rem 1.5rem rgb(0 0 0 / 35%);
+      --sombra-2: 0 1px 2px rgb(0 0 0 / 30%), 0 0.6rem 1.6rem rgb(0 0 0 / 35%);
       --sombra-3: 0 1.5rem 3.75rem rgb(0 0 0 / 60%);
     }
   }
 
   :root[data-theme="dark"] {
     color-scheme: dark;
-    --fundo: #0a0d12;
-    --superficie: #11161d;
-    --superficie-2: #19202a;
-    --superficie-3: #232c38;
-    --tinta: #eef2f7;
-    --tinta-2: #a3aebf;
-    --tinta-3: #6f7b8f;
-    --linha: #232b36;
-    --acento: #2dd4bf;
-    --acento-forte: #5eead4;
-    --acento-suave: rgb(45 212 191 / 12%);
-    --acento-brilho: rgb(45 212 191 / 25%);
-    --sobre-acento: #04201c;
-    --destaque: #fbbf24;
-    --aviso: #fbbf24;
-    --aviso-suave: rgb(251 191 36 / 12%);
-    --perigo: #f87171;
-    --perigo-suave: rgb(248 113 113 / 12%);
-    --ok: #4ade80;
-    --ok-suave: rgb(74 222 128 / 12%);
-    --mensagem-minha: #0f766e;
-    --topo-fundo: rgb(10 13 18 / 72%);
+    --fundo: #141210;
+    --superficie: #1d1a17;
+    --superficie-2: #27231f;
+    --superficie-3: #36302a;
+    --tinta: #f3ece2;
+    --tinta-2: #b9aea2;
+    --tinta-3: #8e8378;
+    --linha: #36302a;
+    --acento: #c8733a;
+    --acento-forte: #e08f55;
+    --acento-suave: rgb(200 115 58 / 14%);
+    --acento-brilho: rgb(200 115 58 / 28%);
+    --sobre-acento: #141210;
+    --ligacao: #e08f55;
+    --aviso: #e0b25a;
+    --aviso-suave: rgb(212 169 79 / 14%);
+    --perigo: #f08a7e;
+    --perigo-suave: rgb(240 138 126 / 13%);
+    --ok: #8fbf89;
+    --ok-suave: rgb(127 163 122 / 15%);
+    --mensagem-minha: #8a4519;
+    --topo-fundo: rgb(20 18 16 / 80%);
+    --inverso-fundo: #f3ece2;
+    --inverso-tinta: #1c1714;
+    --inverso-tinta-2: #5c524a;
+    --inverso-linha: #d6ccbe;
+    --inverso-destaque: #a4561f;
     --sombra-1: 0 1px 2px rgb(0 0 0 / 40%);
-    --sombra-2: 0 1px 2px rgb(0 0 0 / 30%), 0 0.5rem 1.5rem rgb(0 0 0 / 35%);
+    --sombra-2: 0 1px 2px rgb(0 0 0 / 30%), 0 0.6rem 1.6rem rgb(0 0 0 / 35%);
     --sombra-3: 0 1.5rem 3.75rem rgb(0 0 0 / 60%);
   }
 
@@ -271,15 +333,16 @@
   h1,
   h2,
   h3 {
+    font-family: var(--fonte-titulos);
     font-weight: 700;
-    line-height: 1.15;
-    letter-spacing: -0.02em;
+    line-height: 1.08;
+    letter-spacing: -0.03em;
     margin-bottom: 0.4em;
   }
 
-  h1 { font-size: var(--titulo-1); letter-spacing: -0.035em; }
-  h2 { font-size: var(--titulo-2); letter-spacing: -0.025em; }
-  h3 { font-size: var(--titulo-3); font-weight: 650; }
+  h1 { font-size: var(--titulo-1); letter-spacing: -0.04em; }
+  h2 { font-size: var(--titulo-2); letter-spacing: -0.035em; }
+  h3 { font-size: var(--titulo-3); letter-spacing: -0.02em; }
 
   p {
     margin-bottom: 1em;
@@ -290,7 +353,7 @@
   }
 
   a {
-    color: var(--acento);
+    color: var(--ligacao);
     text-decoration-thickness: 1px;
     text-underline-offset: 0.2em;
     transition: color var(--rapido);
@@ -310,7 +373,7 @@
   }
 
   :focus-visible {
-    outline: 2px solid var(--acento);
+    outline: 2px solid var(--ligacao);
     outline-offset: 2px;
     border-radius: 0.25rem;
   }
@@ -388,6 +451,18 @@
 
 @layer utilitarios {
   .texto-suave { color: var(--tinta-2); }
+
+  /* Marcador à mão: cobre a palavra inteira e o texto fica sempre carvão (12:1). */
+  .marcador {
+    padding: 0 0.12em;
+    margin: 0 -0.04em;
+    color: #1c1714;
+    background: url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27 preserveAspectRatio=%27none%27%3E%3Cpath d=%27M2.5 8C22 3 66 2 97.5 5.5C99.6 32 99.4 62 97 93C64 97 30 98 3 94.5C.6 64 .4 34 2.5 8Z%27 fill=%27%23f2d08a%27/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+
+  .letra-mao { font-family: var(--fonte-mao); font-weight: 400; letter-spacing: 0; }
   .texto-pequeno { font-size: var(--texto-s); }
   .centrado { text-align: center; }
 
