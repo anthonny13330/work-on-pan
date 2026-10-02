@@ -24,13 +24,16 @@
     <div class="caixa-entrada" id="caixa">
       <section class="lista-conversas" aria-labelledby="tituloMensagens">
         <div class="lista-conversas-topo">
-          <h1 id="tituloMensagens">Mensagens</h1>
+          <h1 id="tituloMensagens" class="titulo-com-icone"><wop-icone nome="mensagens"></wop-icone> Mensagens</h1>
           <label for="pesquisaConversas" class="so-leitores">Procurar conversa</label>
-          <input type="search" id="pesquisaConversas" placeholder="Procurar por pessoa ou projeto" autocomplete="off">
+          <div class="entrada-icone">
+            <wop-icone nome="pesquisar"></wop-icone>
+            <input type="search" id="pesquisaConversas" placeholder="Procurar por pessoa ou projeto" autocomplete="off">
+          </div>
           <div class="filtro-conversas" role="group" aria-label="Filtrar conversas">
             <button type="button" data-filtro="todas" aria-pressed="true">Todas</button>
-            <button type="button" data-filtro="por-ler" aria-pressed="false">Por ler</button>
-            <button type="button" data-filtro="projetos" aria-pressed="false">Sobre projetos</button>
+            <button type="button" data-filtro="por-ler" aria-pressed="false"><wop-icone nome="notificacoes"></wop-icone> Por ler</button>
+            <button type="button" data-filtro="projetos" aria-pressed="false"><wop-icone nome="projetos"></wop-icone> Sobre projetos</button>
           </div>
         </div>
         <ul class="conversas" id="listaConversas">
@@ -44,9 +47,10 @@
 
       <div class="sem-conversa">
         <div>
-          <wop-logo tamanho="56" style="margin: 0 auto 1rem; opacity: 0.85"></wop-logo>
+          <wop-logo tamanho="96" class="ilustracao"></wop-logo>
           <h2>Escolhe uma conversa</h2>
           <p>As conversas abrem-se quando um freelancer envia uma proposta<br>ou quando um cliente contacta um freelancer.</p>
+          <p class="letra-mao">a panela está ao lume…</p>
         </div>
       </div>
     </div>

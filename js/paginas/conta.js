@@ -2,7 +2,8 @@ import "../arranque.js";
 import { sb, ok } from "../nucleo/supabase.js";
 import { exigirSessao } from "../nucleo/sessao.js";
 import { $, avisar, aplicarTema, temaGuardado, pedirSenha, aCarregar } from "../nucleo/ui.js";
-import { CATEGORIAS, MOEDAS, listaCompetencias, traduzirErro } from "../nucleo/formato.js";
+import { CATEGORIAS, MOEDAS, iniciais, listaCompetencias, nomeCompleto, traduzirErro } from "../nucleo/formato.js";
+import { forcaSenha, ligarSenhas } from "../nucleo/senha.js";
 
 const { user, perfil } = await exigirSessao();
 const freelancer = perfil.tipo === "freelancer";
@@ -16,6 +17,9 @@ $("#area").innerHTML =
   '<option value="">Escolhe</option>' + Object.entries(CATEGORIAS).map(([k, v]) => `<option value="${k}">${v}</option>`).join("");
 $("#moeda").innerHTML = Object.entries(MOEDAS).map(([k, v]) => `<option value="${k}">${v}</option>`).join("");
 
+ligarSenhas();
+$("#nomeConta").textContent = nomeCompleto(perfil) || "A minha conta";
+$("#avatarConta").textContent = iniciais(nomeCompleto(perfil));
 $("#tipoConta").textContent = freelancer ? "freelancer" : "cliente";
 $("#emailConta").textContent = user.email;
 $("#email").value = user.email;
@@ -41,7 +45,7 @@ formPerfil.elements.disponivel.checked = perfil.disponivel;
 sb.from("contas").select("telefone").eq("id", user.id).maybeSingle()
   .then(({ data }) => ($("#telefone").value = data?.telefone || ""));
 
-$("#tema").value = temaGuardado();
+for (const r of document.querySelectorAll("input[name=tema]")) r.checked = r.value === temaGuardado();
 $("#tema").addEventListener("change", (e) => {
   aplicarTema(e.target.value);
   avisar("Tema alterado.");
@@ -101,6 +105,7 @@ $("#formSenha").addEventListener("submit", async (evento) => {
   const { atual, nova, repetir } = Object.fromEntries(new FormData(form));
   if (!recuperacao && !atual) return avisar("Escreve a palavra-passe atual.", "erro");
   if (nova.length < 8) return avisar("A nova palavra-passe tem de ter pelo menos 8 caracteres.", "erro");
+  if (forcaSenha(nova).nivel < 2) return avisar("Essa palavra-passe é fácil de adivinhar. Junta maiúsculas, números ou símbolos.", "erro");
   if (nova !== repetir) return avisar("As duas novas palavras-passe não são iguais.", "erro");
   try {
     if (!recuperacao) await confirmarSenha(atual);

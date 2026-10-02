@@ -10,7 +10,7 @@ const { user, perfil } = await exigirSessao();
 const CAMPOS = `*,
   cliente:perfis!conversas_cliente_id_fkey(nome, sobrenome, empresa),
   freelancer:perfis!conversas_freelancer_id_fkey(nome, sobrenome),
-  projeto:projetos(id, titulo, estado, orcamento, moeda, prazo_dias)`;
+  projeto:projetos(id, titulo, estado, categoria, orcamento, moeda, prazo_dias)`;
 
 const estado = {
   conversas: [],
@@ -142,19 +142,21 @@ function desenharConversa(c) {
   pintar(
     html`
       <div class="conversa-topo">
-        <button type="button" class="voltar-lista" @click=${fecharConversa}>← Conversas</button>
+        <button type="button" class="voltar-lista" @click=${fecharConversa}><wop-icone nome="voltar"></wop-icone> Conversas</button>
         <div class="pessoa">
           <span class="avatar" aria-hidden="true">${iniciais(nome)}</span>
           <div style="min-width: 0">
             <strong>${nome}</strong>
-            <small>${p?.titulo || "Contacto direto"}</small>
+            <small>${p ? html`<wop-icone nome=${p.categoria || "projetos"}></wop-icone> ${p.titulo}` : "Contacto direto"}</small>
           </div>
         </div>
       </div>
       ${p
         ? html`<div class="contexto-projeto">
-            ${etiquetaProjeto(p.estado)} <span>Orçamento ${dinheiro(p.orcamento, p.moeda)} · ${p.prazo_dias} dias</span>
-            <a href="/painel">${perfil.tipo === "cliente" ? "ver propostas" : "ver a minha proposta"}</a>
+            ${etiquetaProjeto(p.estado)}
+            <span class="contexto-facto"><wop-icone nome="orcamento"></wop-icone>${dinheiro(p.orcamento, p.moeda)}</span>
+            <span class="contexto-facto"><wop-icone nome="prazo"></wop-icone>${p.prazo_dias} dias</span>
+            <a href="/painel">${perfil.tipo === "cliente" ? "Ver propostas" : "Ver a minha proposta"} <wop-icone nome="seta"></wop-icone></a>
           </div>`
         : nothing}
       <div class="mensagens" id="mensagens" role="log" aria-live="polite" aria-label="Mensagens com ${nome}"></div>
@@ -169,9 +171,9 @@ function desenharConversa(c) {
               e.target.form.requestSubmit();
             }
           }}></textarea>
-        <button type="submit" class="botao botao-principal">Enviar</button>
+        <button type="submit" class="botao botao-principal botao-enviar" aria-label="Enviar mensagem"><wop-icone nome="enviar"></wop-icone><span>Enviar</span></button>
       </form>
-      <p class="texto-pequeno texto-suave" style="padding: 0 1rem 0.6rem; background: var(--superficie); font-size: 0.75rem">
+      <p class="dica-escrever"><wop-icone nome="escudo"></wop-icone>
         Enter envia · Shift+Enter muda de linha · Nunca partilhes palavras-passe nem dados bancários.</p>
     `,
     $("#painelConversa")

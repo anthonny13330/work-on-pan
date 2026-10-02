@@ -66,30 +66,51 @@ function filtrar() {
 function botaoCartao(p) {
   const minha = estado.minhasPropostas.get(p.id);
   if (minha && minha.estado !== "retirada") return html`<span class="etiqueta etiqueta-ok">Já enviaste proposta</span>`;
-  return html`<a class="botao botao-secundario botao-pequeno" href="?p=${p.id}" @click=${(e) => abrirProjeto(p.id, e)}>
-    ${souFreelancer() ? "Ver e propor" : "Ver detalhes"}</a>`;
+  return html`<a class="botao ${souFreelancer() ? "botao-principal" : "botao-secundario"} botao-pequeno" href="?p=${p.id}" @click=${(e) => abrirProjeto(p.id, e)}>
+    ${souFreelancer() ? html`<wop-icone nome="enviar"></wop-icone> Ver e propor` : html`Ver detalhes <wop-icone nome="seta"></wop-icone>`}</a>`;
 }
 
 const cartao = (p) => html`
-  <article class="cartao">
+  <article class="cartao cartao-projeto">
     <div class="item-topo">
-      <div>
-        <p class="sobretitulo com-icone"><wop-icone nome=${p.categoria}></wop-icone>${nomeCategoria(p.categoria)}</p>
+      <span class="area-icone" data-area=${p.categoria}><wop-icone nome=${p.categoria}></wop-icone></span>
+      <div class="item-topo-texto">
+        <p class="sobretitulo">${nomeCategoria(p.categoria)} · ${dataCurta(p.criado_em)}</p>
         <h3><a class="item-titulo" href="?p=${p.id}" @click=${(e) => abrirProjeto(p.id, e)}>${p.titulo}</a></h3>
       </div>
-      <span class="valor">${dinheiro(p.orcamento, p.moeda)}</span>
     </div>
     <p class="item-descricao">${p.descricao}</p>
     ${p.competencias.length ? html`<ul class="competencias">${p.competencias.map((c) => html`<li>${c}</li>`)}</ul>` : nothing}
     <div class="item-rodape">
-      <ul class="meta" style="margin: 0">
-        <li>Entrega em ${p.prazo_dias} dias</li>
-        <li>${dataCurta(p.criado_em)} · ${nomeCliente(p.cliente)}</li>
+      <ul class="meta meta-icones" style="margin: 0">
+        <li><wop-icone nome="orcamento"></wop-icone><strong class="valor">${dinheiro(p.orcamento, p.moeda)}</strong></li>
+        <li><wop-icone nome="prazo"></wop-icone>${p.prazo_dias} dias</li>
+        <li><wop-icone nome="perfil"></wop-icone>${nomeCliente(p.cliente)}</li>
       </ul>
       ${botaoCartao(p)}
     </div>
   </article>
 `;
+
+// Atalhos por área: pílulas com ícone que mudam o filtro «Área».
+function desenharAreas() {
+  const atual = filtros.elements.area.value;
+  const escolher = (valor) => {
+    filtros.elements.area.value = valor;
+    filtros.dispatchEvent(new Event("input"));
+    desenharAreas();
+  };
+  pintar(
+    html`${[["", "Todas", "painel"], ...Object.entries(CATEGORIAS).map(([k, v]) => [k, v.split(" ")[0], k])].map(
+      ([valor, texto, ic]) => html`<button type="button" class="pilula-area" aria-pressed=${atual === valor}
+        title=${valor ? CATEGORIAS[valor] : "Todas as áreas"} @click=${() => escolher(valor)}>
+        <wop-icone nome=${ic}></wop-icone>${texto}</button>`
+    )}`,
+    $("#atalhosAreas")
+  );
+}
+desenharAreas();
+filtros.addEventListener("change", desenharAreas);
 
 function desenhar() {
   if (!estado.carregado) return;
@@ -120,6 +141,7 @@ function desenhar() {
 function limparFiltros() {
   filtros.reset();
   history.replaceState(null, "", location.pathname);
+  desenharAreas();
   desenhar();
 }
 
@@ -165,13 +187,13 @@ function desenharJanela() {
             <p class="sobretitulo com-icone"><wop-icone nome=${p.categoria}></wop-icone>${nomeCategoria(p.categoria)}</p>
             <h2 id="jpTitulo">${p.titulo}</h2>
           </div>
-          <button type="button" class="fechar" aria-label="Fechar" @click=${() => janela.close()}>×</button>
+          <button type="button" class="fechar" aria-label="Fechar" @click=${() => janela.close()}><wop-icone nome="fechar"></wop-icone></button>
         </div>
-        <ul class="meta">
-          <li><strong>${dinheiro(p.orcamento, p.moeda)}</strong> de orçamento</li>
-          <li>Entrega em ${p.prazo_dias} dias</li>
-          <li>Cliente: ${nomeCliente(p.cliente)}</li>
-          <li>Publicado ${dataCurta(p.criado_em)}</li>
+        <ul class="factos">
+          <li><wop-icone nome="orcamento"></wop-icone><span>Orçamento</span><strong>${dinheiro(p.orcamento, p.moeda)}</strong></li>
+          <li><wop-icone nome="prazo"></wop-icone><span>Prazo</span><strong>${p.prazo_dias} dias</strong></li>
+          <li><wop-icone nome="perfil"></wop-icone><span>Cliente</span><strong>${nomeCliente(p.cliente)}</strong></li>
+          <li><wop-icone nome="notificacoes"></wop-icone><span>Publicado</span><strong>${dataCurta(p.criado_em)}</strong></li>
         </ul>
         <p style="white-space: pre-line; margin-top: 1rem">${p.descricao}</p>
         ${p.competencias.length ? html`<ul class="competencias">${p.competencias.map((c) => html`<li>${c}</li>`)}</ul>` : nothing}
@@ -237,7 +259,7 @@ function acaoDaJanela(p) {
         <textarea id="ppMensagem" name="mensagem" maxlength="3000" required
           placeholder="Como farias o trabalho, o que já fizeste de parecido e o que precisas que o cliente te envie."></textarea>
       </div>
-      <button type="submit" class="botao botao-principal botao-largo">Enviar proposta ao cliente</button>
+      <button type="submit" class="botao botao-principal botao-largo"><wop-icone nome="enviar"></wop-icone> Enviar proposta ao cliente</button>
     </form>`;
 }
 

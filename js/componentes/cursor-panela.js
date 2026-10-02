@@ -18,7 +18,17 @@ function iniciar() {
   const cursor = document.createElement("div");
   cursor.className = "cursor-panela";
   cursor.setAttribute("aria-hidden", "true");
-  cursor.innerHTML = `<div class="cursor-panela-corpo">${desenhoMarca(36)}</div>`;
+  // Silhueta da panela: serve de sombra (deslocada) e de contorno marfim, para se ver em qualquer fundo.
+  const silhueta = (cor, largura) => `
+    <path d="M13 13L25 25" stroke="${cor}" stroke-width="${6.4 + largura}" stroke-linecap="round"/>
+    <path d="M4 4L22 9.6L15.2 12.6L12.6 15.2L9.6 22Z" fill="${cor}" stroke="${cor}" stroke-width="${1.6 + largura}" stroke-linejoin="round"/>
+    <circle cx="38" cy="38" r="${21 + largura / 2}" fill="${cor}"/>`;
+  const marca = desenhoMarca(36).replace(/^\s*<svg[^>]*>/, "").replace(/<\/svg>\s*$/, "");
+  cursor.innerHTML = `<div class="cursor-panela-corpo"><svg width="36" height="36" viewBox="-2 -2 70 70" overflow="visible">
+    <g class="cursor-sombra">${silhueta("#000", 4)}</g>
+    ${silhueta("#f3ece2", 4)}
+    ${marca}
+  </svg></div>`;
   document.body.append(cursor);
   const corpo = cursor.firstElementChild;
 
@@ -29,7 +39,7 @@ function iniciar() {
 
   const mover = () => {
     pedido = 0;
-    cursor.style.transform = `translate3d(${x - 2}px, ${y - 2}px, 0)`;
+    cursor.style.transform = `translate3d(${x - 3}px, ${y - 3}px, 0)`;
   };
 
   const aoMover = (e) => {

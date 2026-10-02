@@ -17,7 +17,8 @@ const opcoes = (mapa, vazio) =>
   (vazio ? `<option value="">${vazio}</option>` : "") +
   Object.entries(mapa).map(([k, v]) => `<option value="${k}">${v}</option>`).join("");
 
-const resumo = (itens) => itens.map(([n, texto]) => html`<li><strong>${n}</strong><span>${texto}</span></li>`);
+const resumo = (itens) =>
+  itens.map(([n, texto, icone]) => html`<li><wop-icone nome=${icone}></wop-icone><strong>${n}</strong><span>${texto}</span></li>`);
 
 /* ═══════════════════════════ CLIENTE ═══════════════════════════ */
 
@@ -35,6 +36,12 @@ function iniciarCliente() {
   carregarFreelancers();
   $("#pesquisaFreelancers").addEventListener("input", desenharFreelancers);
   $("#formPublicar").addEventListener("submit", publicarProjeto);
+  $("#atalhoPublicar").addEventListener("click", (e) => {
+    e.preventDefault();
+    window.mudarSeparador("publicar", true);
+    $("#pubTitulo").focus({ preventScroll: true });
+    $("#painel-publicar").scrollIntoView({ behavior: "smooth", block: "start" });
+  });
 }
 
 // Separadores acessíveis: setas esquerda/direita mudam de separador.
@@ -93,10 +100,10 @@ function desenharMeusProjetos() {
 
   pintar(
     resumo([
-      [conta("aberto"), "a receber propostas"],
-      [porResponder, "propostas por responder"],
-      [conta("em_andamento"), "em andamento"],
-      [conta("concluido"), "concluídos"],
+      [conta("aberto"), "a receber propostas", "projetos"],
+      [porResponder, "propostas por responder", "notificacoes"],
+      [conta("em_andamento"), "em andamento", "prazo"],
+      [conta("concluido"), "concluídos", "aceitar"],
     ]),
     $("#resumoCliente")
   );
@@ -125,21 +132,21 @@ const AJUDA_ESTADO = {
 function cartaoMeuProjeto(p) {
   const propostas = p.propostas.filter((pp) => pp.estado !== "retirada");
   return html`
-    <article class="cartao">
+    <article class="cartao cartao-projeto">
       <div class="item-topo">
-        <div>
+        <span class="area-icone" data-area=${p.categoria}><wop-icone nome=${p.categoria}></wop-icone></span>
+        <div class="item-topo-texto">
           <h3>${p.titulo}</h3>
-          <ul class="meta">
-            <li>${nomeCategoria(p.categoria)}</li>
-            <li>${dinheiro(p.orcamento, p.moeda)}</li>
-            <li>${p.prazo_dias} dias</li>
-            <li>publicado ${dataCurta(p.criado_em)}</li>
+          <ul class="meta meta-icones">
+            <li><wop-icone nome="orcamento"></wop-icone>${dinheiro(p.orcamento, p.moeda)}</li>
+            <li><wop-icone nome="prazo"></wop-icone>${p.prazo_dias} dias</li>
+            <li><wop-icone nome="notificacoes"></wop-icone>publicado ${dataCurta(p.criado_em)}</li>
           </ul>
         </div>
         ${etiquetaProjeto(p.estado)}
       </div>
       <p class="item-descricao">${p.descricao}</p>
-      ${p.escolhido ? html`<p style="margin-top: 0.6rem">Freelancer escolhido: <strong>${nomeCompleto(p.escolhido)}</strong></p>` : nothing}
+      ${p.escolhido ? html`<p class="escolhido"><wop-icone nome="estrela"></wop-icone>Freelancer escolhido: <strong>${nomeCompleto(p.escolhido)}</strong></p>` : nothing}
       <div class="sub-lista">
         <strong>${propostas.length ? `Propostas recebidas (${propostas.length})` : "Ainda sem propostas"}</strong>
         ${propostas.length
@@ -176,27 +183,27 @@ function cartaoPropostaRecebida(projeto, pp) {
       <div class="acoes">
         ${podeDecidir
           ? html`
-              <button class="botao botao-principal botao-pequeno" @click=${() => responderProposta(projeto, pp, true)}>Aceitar e começar o projeto</button>
-              <button class="botao botao-perigo botao-pequeno" @click=${() => responderProposta(projeto, pp, false)}>Recusar</button>`
+              <button class="botao botao-principal botao-pequeno" @click=${() => responderProposta(projeto, pp, true)}><wop-icone nome="aceitar"></wop-icone> Aceitar e começar o projeto</button>
+              <button class="botao botao-perigo botao-pequeno" @click=${() => responderProposta(projeto, pp, false)}><wop-icone nome="recusar"></wop-icone> Recusar</button>`
           : nothing}
         <button class="botao botao-secundario botao-pequeno" @click=${() => irParaConversa(pp.freelancer_id, projeto.id)}>
-          Conversar com ${pp.freelancer?.nome || "o freelancer"}</button>
+          <wop-icone nome="mensagens"></wop-icone> Conversar com ${pp.freelancer?.nome || "o freelancer"}</button>
       </div>
     </div>
   `;
 }
 
 function acoesProjeto(p) {
-  const apagar = html`<button class="botao botao-perigo botao-pequeno" @click=${() => apagarProjeto(p)}>Apagar</button>`;
+  const apagar = html`<button class="botao botao-perigo botao-pequeno" @click=${() => apagarProjeto(p)}><wop-icone nome="lixo"></wop-icone> Apagar</button>`;
   switch (p.estado) {
     case "aberto":
-      return html`<button class="botao botao-secundario botao-pequeno" @click=${() => mudarEstado(p, "fechado")}>Fechar a novas propostas</button>${apagar}`;
+      return html`<button class="botao botao-secundario botao-pequeno" @click=${() => mudarEstado(p, "fechado")}><wop-icone nome="cadeado"></wop-icone> Fechar a novas propostas</button>${apagar}`;
     case "fechado":
-      return html`<button class="botao botao-secundario botao-pequeno" @click=${() => mudarEstado(p, "aberto")}>Reabrir a propostas</button>${apagar}`;
+      return html`<button class="botao botao-secundario botao-pequeno" @click=${() => mudarEstado(p, "aberto")}><wop-icone nome="publicar"></wop-icone> Reabrir a propostas</button>${apagar}`;
     case "em_andamento":
       return html`
-        <button class="botao botao-secundario botao-pequeno" @click=${() => irParaConversa(p.freelancer_id, p.id)}>Falar com o freelancer</button>
-        <button class="botao botao-principal botao-pequeno" @click=${() => mudarEstado(p, "concluido")}>Marcar como concluído</button>`;
+        <button class="botao botao-secundario botao-pequeno" @click=${() => irParaConversa(p.freelancer_id, p.id)}><wop-icone nome="mensagens"></wop-icone> Falar com o freelancer</button>
+        <button class="botao botao-principal botao-pequeno" @click=${() => mudarEstado(p, "concluido")}><wop-icone nome="aceitar"></wop-icone> Marcar como concluído</button>`;
     default:
       return apagar;
   }
@@ -339,7 +346,7 @@ const cartaoFreelancer = (f) => html`
         <span class="avatar" aria-hidden="true">${iniciais(nomeCompleto(f))}</span>
         <div>
           <h3>${nomeCompleto(f)}</h3>
-          <span class="texto-suave texto-pequeno">${f.area ? nomeCategoria(f.area) : "Área não indicada"}</span>
+          <span class="texto-suave texto-pequeno com-icone-linha">${f.area ? html`<wop-icone nome=${f.area}></wop-icone>${nomeCategoria(f.area)}` : "Área não indicada"}</span>
         </div>
       </div>
       ${f.valor_hora ? html`<span class="valor">${dinheiro(f.valor_hora, f.moeda)}<span class="texto-suave texto-pequeno">/hora</span></span>` : nothing}
@@ -347,8 +354,8 @@ const cartaoFreelancer = (f) => html`
     <p class="item-descricao">${f.bio || "Ainda sem apresentação."}</p>
     ${f.competencias.length ? html`<ul class="competencias">${f.competencias.map((c) => html`<li>${c}</li>`)}</ul>` : nothing}
     <div class="item-rodape">
-      <span class="texto-pequeno ${f.disponivel ? "" : "texto-suave"}">${f.disponivel ? "Disponível para novos projetos" : "Sem disponibilidade de momento"}</span>
-      <button class="botao botao-secundario botao-pequeno" @click=${() => irParaConversa(f.id)}>Enviar mensagem</button>
+      <span class="disponibilidade ${f.disponivel ? "sim" : ""}">${f.disponivel ? "Disponível para novos projetos" : "Sem disponibilidade de momento"}</span>
+      <button class="botao botao-secundario botao-pequeno" @click=${() => irParaConversa(f.id)}><wop-icone nome="mensagens"></wop-icone> Enviar mensagem</button>
     </div>
   </article>
 `;
@@ -391,10 +398,10 @@ function desenharResumoFreelancer() {
   const n = (...estados) => minhasPropostas.filter((p) => estados.includes(p.estado)).length;
   pintar(
     resumo([
-      [n("pendente"), "à espera de resposta"],
-      [n("aceite"), "aceites"],
-      [n("recusada", "fechada"), "recusadas ou fechadas"],
-      [abertosAgora, "projetos abertos agora"],
+      [n("pendente"), "à espera de resposta", "prazo"],
+      [n("aceite"), "aceites", "aceitar"],
+      [n("recusada", "fechada"), "recusadas ou fechadas", "recusar"],
+      [abertosAgora, "projetos abertos agora", "projetos"],
     ]),
     $("#resumoFreelancer")
   );
@@ -430,11 +437,11 @@ function cartaoMinhaProposta(pp) {
       <div class="item-topo">
         <div>
           <h3>${pp.projeto.titulo}</h3>
-          <ul class="meta">
-            <li>Cliente: ${nomeCliente(pp.projeto.cliente)}</li>
-            <li>${dinheiro(pp.valor, pp.moeda)}</li>
-            <li>entrega em ${pp.prazo_entrega} dias</li>
-            <li>enviada ${dataCurta(pp.criado_em)}</li>
+          <ul class="meta meta-icones">
+            <li><wop-icone nome="perfil"></wop-icone>${nomeCliente(pp.projeto.cliente)}</li>
+            <li><wop-icone nome="orcamento"></wop-icone>${dinheiro(pp.valor, pp.moeda)}</li>
+            <li><wop-icone nome="prazo"></wop-icone>entrega em ${pp.prazo_entrega} dias</li>
+            <li><wop-icone nome="enviar"></wop-icone>enviada ${dataCurta(pp.criado_em)}</li>
           </ul>
         </div>
         ${etiquetaProposta(pp.estado)}
@@ -443,12 +450,12 @@ function cartaoMinhaProposta(pp) {
       <div class="item-rodape">
         <span class="texto-suave texto-pequeno">${NOTA_PROPOSTA[pp.estado]}${reenviar ? " O projeto ainda está aberto, podes voltar a enviá-la." : ""}</span>
         <div class="acoes">
-          <button class="botao botao-secundario botao-pequeno" @click=${() => irParaConversa(pp.projeto.cliente_id, pp.projeto_id)}>Falar com o cliente</button>
+          <button class="botao botao-secundario botao-pequeno" @click=${() => irParaConversa(pp.projeto.cliente_id, pp.projeto_id)}><wop-icone nome="mensagens"></wop-icone> Falar com o cliente</button>
           ${pp.estado === "pendente" || reenviar
-            ? html`<button class="botao botao-secundario botao-pequeno" @click=${() => editarProposta(pp)}>${reenviar ? "Voltar a enviar" : "Editar"}</button>`
+            ? html`<button class="botao botao-secundario botao-pequeno" @click=${() => editarProposta(pp)}><wop-icone nome="editar"></wop-icone> ${reenviar ? "Voltar a enviar" : "Editar"}</button>`
             : nothing}
           ${pp.estado === "pendente"
-            ? html`<button class="botao botao-perigo botao-pequeno" @click=${() => retirarProposta(pp)}>Retirar</button>`
+            ? html`<button class="botao botao-perigo botao-pequeno" @click=${() => retirarProposta(pp)}><wop-icone nome="recusar"></wop-icone> Retirar</button>`
             : nothing}
         </div>
       </div>
@@ -466,7 +473,7 @@ function editarProposta(pp) {
             <p class="sobretitulo">${pp.projeto.titulo}</p>
             <h2 id="jeTitulo">${pp.estado === "retirada" ? "Voltar a enviar a proposta" : "Editar proposta"}</h2>
           </div>
-          <button type="button" class="fechar" aria-label="Fechar" @click=${() => janela.close()}>×</button>
+          <button type="button" class="fechar" aria-label="Fechar" @click=${() => janela.close()}><wop-icone nome="fechar"></wop-icone></button>
         </div>
         <div id="msgEditar" role="alert" hidden></div>
         <div class="linha-campos">

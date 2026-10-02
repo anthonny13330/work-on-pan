@@ -28,18 +28,26 @@
 
     <!-- ═══════════════ CLIENTE ═══════════════ -->
     <div id="vistaCliente" hidden>
-      <header class="cabecalho-pagina">
-        <h1 id="cOla">Olá</h1>
-        <p>Publica o que precisas, compara as propostas e escolhe um freelancer. Depois de aceitares uma proposta,
-          o projeto passa a «Em andamento» e continuam a conversa em Mensagens.</p>
+      <header class="faixa-painel">
+        <div>
+          <p class="sobretitulo">Painel de cliente</p>
+          <h1 id="cOla">Olá</h1>
+          <p>Publica o que precisas, compara as propostas e escolhe um freelancer. Depois de aceitares uma proposta,
+            o projeto passa a «Em andamento» e continuam a conversa em Mensagens.</p>
+          <div class="acoes">
+            <a class="botao botao-heroi" href="#publicar" id="atalhoPublicar"><wop-icone nome="publicar"></wop-icone> Publicar novo projeto</a>
+            <a class="botao botao-heroi-contorno" href="/mensagens"><wop-icone nome="mensagens"></wop-icone> Mensagens</a>
+          </div>
+        </div>
+        <wop-logo tamanho="140" aria-hidden="true"></wop-logo>
       </header>
 
       <ul class="resumo" aria-label="Resumo" id="resumoCliente"></ul>
 
       <div class="separadores" role="tablist" aria-label="Secções do painel">
-        <button role="tab" id="tab-projetos" aria-controls="painel-projetos" aria-selected="true">Os meus projetos</button>
-        <button role="tab" id="tab-publicar" aria-controls="painel-publicar" aria-selected="false" tabindex="-1">Publicar novo projeto</button>
-        <button role="tab" id="tab-freelancers" aria-controls="painel-freelancers" aria-selected="false" tabindex="-1">Procurar freelancers</button>
+        <button role="tab" id="tab-projetos" aria-controls="painel-projetos" aria-selected="true"><wop-icone nome="projetos"></wop-icone> Os meus projetos</button>
+        <button role="tab" id="tab-publicar" aria-controls="painel-publicar" aria-selected="false" tabindex="-1"><wop-icone nome="publicar"></wop-icone> Publicar novo projeto</button>
+        <button role="tab" id="tab-freelancers" aria-controls="painel-freelancers" aria-selected="false" tabindex="-1"><wop-icone nome="pessoas"></wop-icone> Procurar freelancers</button>
       </div>
 
       <section role="tabpanel" id="painel-projetos" aria-labelledby="tab-projetos" tabindex="0">
@@ -48,7 +56,7 @@
 
       <section role="tabpanel" id="painel-publicar" aria-labelledby="tab-publicar" tabindex="0" hidden>
         <form class="cartao" id="formPublicar" novalidate style="max-width: 46rem">
-          <h2>Publicar novo projeto</h2>
+          <h2 class="titulo-com-icone"><wop-icone nome="publicar"></wop-icone> Publicar novo projeto</h2>
           <p class="texto-suave texto-pequeno">Assim que publicares, o projeto aparece em «Projetos abertos» e qualquer
             freelancer pode enviar-te uma proposta. Recebes as propostas em «Os meus projetos».</p>
           <div id="msgPublicar" role="alert" hidden></div>
@@ -89,7 +97,7 @@
               <span class="ajuda">Separa com vírgulas.</span>
             </div>
           </div>
-          <button type="submit" class="botao botao-principal">Publicar projeto</button>
+          <button type="submit" class="botao botao-principal botao-grande">Publicar projeto</button>
         </form>
       </section>
 
@@ -97,7 +105,10 @@
         <search class="filtros" style="grid-template-columns: 1fr">
           <div class="campo">
             <label for="pesquisaFreelancers">Procurar por nome, área ou competência</label>
-            <input type="search" id="pesquisaFreelancers" autocomplete="off">
+            <div class="entrada-icone">
+              <wop-icone nome="pesquisar"></wop-icone>
+              <input type="search" id="pesquisaFreelancers" autocomplete="off" placeholder="Ex.: ilustração, WordPress, Rita">
+            </div>
           </div>
         </search>
         <div id="listaFreelancers" class="lista-grelha"><div class="esqueleto"></div><div class="esqueleto"></div></div>
@@ -106,14 +117,21 @@
 
     <!-- ═══════════════ FREELANCER ═══════════════ -->
     <div id="vistaFreelancer" hidden>
-      <header class="cabecalho-pagina">
-        <h1 id="fOla">Olá</h1>
-        <p>Aqui acompanhas as propostas que enviaste. Enquanto o cliente não responder podes editá-las ou retirá-las.
-          Trabalho novo está em <a href="/projetos">Procurar projetos</a>.</p>
+      <header class="faixa-painel">
+        <div>
+          <p class="sobretitulo">Painel de freelancer</p>
+          <h1 id="fOla">Olá</h1>
+          <p>Aqui acompanhas as propostas que enviaste. Enquanto o cliente não responder podes editá-las ou retirá-las.</p>
+          <div class="acoes">
+            <a class="botao botao-heroi" href="/projetos"><wop-icone nome="pesquisar"></wop-icone> Procurar projetos</a>
+            <a class="botao botao-heroi-contorno" href="/conta#perfil"><wop-icone nome="perfil"></wop-icone> O meu perfil</a>
+          </div>
+        </div>
+        <wop-logo tamanho="140" aria-hidden="true"></wop-logo>
       </header>
 
       <div id="avisoPerfil" class="cartao aviso-perfil" hidden>
-        <strong>O teu perfil está incompleto.</strong>
+        <strong class="titulo-com-icone"><wop-icone nome="info"></wop-icone> O teu perfil está incompleto.</strong>
         <p class="texto-suave" style="margin: 0.25rem 0 0.75rem">Os clientes veem a tua área, apresentação e competências
           quando recebem uma proposta tua. Perfis completos têm mais respostas.</p>
         <a class="botao botao-secundario botao-pequeno" href="/conta#perfil">Completar o meu perfil</a>
@@ -123,7 +141,7 @@
 
       <div class="cabecalho-secao">
         <h2>As minhas propostas</h2>
-        <a class="botao botao-principal botao-pequeno" href="/projetos">Procurar projetos</a>
+        <a class="botao botao-secundario botao-pequeno" href="/projetos"><wop-icone nome="pesquisar"></wop-icone> Procurar projetos</a>
       </div>
       <div id="listaPropostas" class="lista"><div class="esqueleto"></div><div class="esqueleto"></div></div>
     </div>
