@@ -3,7 +3,7 @@ import { html, pintar, nothing, repeat } from "../nucleo/html.js";
 import { sb } from "../nucleo/supabase.js";
 import { exigirSessao, aoMudar, irParaConversa } from "../nucleo/sessao.js";
 import {
-  $, $$, avisar, animarEntrada, confirmar, estadoVazio, etiquetaProjeto, etiquetaProposta, mostrarMensagem,
+  $, $$, avisar, animarEntrada, confirmar, estadoVazio, etiquetaProjeto, etiquetaProposta, mostrarMensagem, vaporar,
 } from "../nucleo/ui.js";
 import {
   CATEGORIAS, MOEDAS, dinheiro, dataCurta, iniciais, nomeCategoria, nomeCliente, nomeCompleto,
@@ -229,17 +229,30 @@ async function publicarProjeto(evento) {
   const botao = form.querySelector('[type="submit"]');
   botao.disabled = true;
   botao.textContent = "A publicar…";
+  botao.classList.add("a-carregar");
   const { error } = await sb.from("projetos").insert(projeto);
+  botao.classList.remove("a-carregar");
+  if (error) {
+    botao.disabled = false;
+    botao.textContent = "Publicar projeto";
+    return erro(`Não foi possível publicar. ${traduzirErro(error)}`);
+  }
+
+  // Um momento para ver o vapor a sair do botão antes de mudar de separador.
+  botao.textContent = "Publicado";
+  botao.classList.add("feito");
+  vaporar(botao);
+  await new Promise((r) => setTimeout(r, matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 1100));
   botao.disabled = false;
   botao.textContent = "Publicar projeto";
-  if (error) return erro(`Não foi possível publicar. ${traduzirErro(error)}`);
+  botao.classList.remove("feito");
 
   form.reset();
   $("#pubMoeda").value = projeto.moeda;
   msg.hidden = true;
   await carregarMeusProjetos();
   window.mudarSeparador("projetos");
-  avisar("Projeto publicado. Já aparece em «Projetos abertos».");
+  avisar("Já está ao lume. O projeto aparece em «Projetos abertos».");
 }
 
 async function mudarEstado(p, estado) {
@@ -285,7 +298,7 @@ async function responderProposta(projeto, pp, aceitar) {
   const { error } = await sb.rpc("responder_proposta", { p_proposta: pp.id, p_aceitar: aceitar });
   if (error) return avisar(traduzirErro(error), "erro");
   await carregarMeusProjetos();
-  avisar(aceitar ? `Proposta de ${nome} aceite. Já podem falar em Mensagens.` : "Proposta recusada.");
+  avisar(aceitar ? `Proposta de ${nome} aceite. Já podem falar em Mensagens.` : "Proposta recusada.", "ok", { vapor: aceitar });
 }
 
 let freelancers = [];

@@ -8,7 +8,7 @@ class WopRodape extends HTMLElement {
       html`
         <div class="rodape-interior">
           <div class="rodape-sobre">
-            <a href="/" class="marca"><wop-logo tamanho="26"></wop-logo> Work on Pan</a>
+            <a href="/" class="marca" aria-label="Work on Pan — início"><wop-logo tamanho="30" nome></wop-logo></a>
             <p>Um sítio simples para quem precisa de um trabalho feito encontrar quem o saiba fazer.
               Os pagamentos e acordos são combinados entre cliente e freelancer.</p>
           </div>

@@ -3,12 +3,8 @@ import { html, render, nothing } from "../nucleo/html.js";
 import { sessao, sessaoPronta, sair, aoMudar, contarPorLer } from "../nucleo/sessao.js";
 import { alternarTema } from "../nucleo/ui.js";
 
-const iconeSol = html`<svg class="icone-sol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-  stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/>
-  <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>`;
-
-const iconeLua = html`<svg class="icone-lua" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-  stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>`;
+const iconeSol = html`<wop-icone class="icone-sol" nome="tema-claro"></wop-icone>`;
+const iconeLua = html`<wop-icone class="icone-lua" nome="tema-escuro"></wop-icone>`;
 
 class WopTopo extends HTMLElement {
   #aberto = false;
@@ -80,7 +76,7 @@ class WopTopo extends HTMLElement {
         <a class="saltar" href="#conteudo">Saltar para o conteúdo</a>
         <div class="topo-interior">
           <a href=${sessao.perfil ? "/painel" : "/"} class="marca" aria-label="Work on Pan — início">
-            <wop-logo tamanho="30"></wop-logo> Work on Pan
+            <wop-logo tamanho="34" nome></wop-logo>
           </a>
           <button type="button" class="botao-icone botao-tema" @click=${alternarTema}
             title="Mudar entre tema claro e escuro" aria-label="Mudar entre tema claro e escuro">

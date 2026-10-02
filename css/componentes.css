@@ -45,14 +45,41 @@
 
     &:hover { color: var(--tinta); }
 
-    & wop-logo { transition: transform 0.4s var(--curva); }
-    &:hover wop-logo { transform: rotate(-8deg) scale(1.06); }
+    & .marca-desenho { transition: transform 0.4s var(--curva); transform-origin: 6% 6%; }
+    &:hover .marca-desenho { transform: rotate(-6deg); }
   }
 
   wop-logo {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55em;
     line-height: 0;
+    color: var(--tinta);
+    --cobre-texto: var(--acento);
   }
+
+  /* O nome: «work on pan», com o «o» de «on» em forma de panela. */
+  .nome-marca {
+    display: inline-flex;
+    align-items: baseline;
+    font-family: var(--fonte-titulos);
+    font-weight: 700;
+    font-size: 1.3rem;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    white-space: nowrap;
+    color: var(--tinta);
+  }
+
+  .o-panela {
+    display: inline-block;
+    width: 0.66em;
+    height: 0.66em;
+    margin: 0 0.03em 0 0.01em;
+    overflow: visible;
+  }
+
+  .nome-pan { color: var(--acento); }
 
   .botao-icone {
     display: inline-grid;
@@ -61,7 +88,7 @@
     height: var(--toque);
     background: none;
     border: 1px solid var(--linha);
-    border-radius: var(--raio-p);
+    border-radius: 999px;
     color: var(--tinta);
     cursor: pointer;
     transition: background-color var(--rapido), transform var(--rapido);
@@ -69,7 +96,7 @@
     &:hover { background: var(--superficie-2); }
     &:active { transform: scale(0.94); }
 
-    & svg { width: 1.15rem; height: 1.15rem; }
+    & .icone { width: 1.25rem; height: 1.25rem; }
   }
 
   .icone-lua { display: none; }
@@ -206,9 +233,9 @@
     justify-content: center;
     gap: 0.4rem;
     min-height: var(--toque);
-    padding: 0.65rem 1.15rem;
+    padding: 0.65rem 1.25rem;
     border: 1px solid transparent;
-    border-radius: var(--raio-p);
+    border-radius: 999px;
     font-weight: 600;
     font-size: 0.94rem;
     line-height: 1.2;
@@ -223,7 +250,7 @@
   .botao-principal {
     background: var(--acento);
     color: var(--sobre-acento);
-    box-shadow: 0 1px 2px rgb(0 0 0 / 10%), inset 0 1px 0 rgb(255 255 255 / 12%);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 10%);
 
     &:hover:not(:disabled) {
       background: var(--acento-forte);
@@ -272,14 +299,12 @@
     min-height: 2.25rem;
     padding: 0.4rem 0.8rem;
     font-size: 0.86rem;
-    border-radius: 0.55rem;
   }
 
   .botao-grande {
     min-height: 3.25rem;
     padding: 0.85rem 1.5rem;
     font-size: 1.02rem;
-    border-radius: var(--raio-m);
   }
 
   .botao-largo { width: 100%; }
@@ -358,11 +383,13 @@
     & p { max-width: 46ch; margin: 0 auto 1rem; }
 
     & .ilustracao {
-      width: 4.5rem;
-      height: 4.5rem;
+      display: flex;
+      justify-content: center;
       margin: 0 auto 1rem;
-      color: var(--acento);
       animation: flutuar 4s ease-in-out infinite;
+
+      /* panela vazia: sem vapor */
+      & .marca-vapor { display: none; }
     }
   }
 
@@ -756,7 +783,7 @@
     &[open] { animation: janela-abrir var(--medio) var(--curva) both; }
 
     &::backdrop {
-      background: rgb(2 6 12 / 55%);
+      background: rgb(20 18 16 / 55%);
       backdrop-filter: blur(4px);
       animation: aparecer 0.25s ease both;
     }
@@ -924,4 +951,205 @@
   @media (pointer: coarse) {
     .botao-pequeno { min-height: 2.6rem; }
   }
+}
+
+/* ── Marca nova: ícones, carregamento, vapor e cursor ───────── */
+
+@layer componentes {
+  wop-icone {
+    display: inline-flex;
+    flex-shrink: 0;
+    width: 1.25em;
+    height: 1.25em;
+  }
+
+  .icone {
+    width: 100%;
+    height: 100%;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+
+    & .c { fill: var(--cobre); stroke: none; }
+    & .cs { fill: var(--cobre); }
+    & .cl { stroke: var(--cobre); }
+    & .ok { stroke: var(--ok); }
+  }
+
+  .botao wop-icone { width: 1.2em; height: 1.2em; }
+
+  /* Botão a trabalhar: um aro pequeno a girar. */
+  .botao.a-carregar::before {
+    content: "";
+    width: 1em;
+    height: 1em;
+    border-radius: 50%;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    opacity: 0.8;
+    animation: girar 0.8s linear infinite;
+  }
+
+  .botao.feito,
+  .botao.feito:disabled {
+    background: var(--ok);
+    border-color: var(--ok);
+    color: var(--fundo);
+    opacity: 1;
+  }
+
+  @keyframes girar {
+    to { transform: rotate(360deg); }
+  }
+
+  /* Panela no carregamento: aparece só se a espera passar de 400 ms. */
+  .carregador {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.9rem;
+    padding: 1rem 0 0.5rem;
+    color: var(--tinta);
+    font-family: var(--fonte-titulos);
+    font-weight: 700;
+    font-size: 1.05rem;
+    letter-spacing: -0.02em;
+    animation: aparecer 0.3s ease 0.4s both;
+
+    & svg { width: 3.5rem; height: 3.5rem; flex-shrink: 0; }
+    & .carregador-corpo { fill: var(--cobre); }
+    & .carregador-fundo { fill: var(--cobre-fundo); }
+
+    & .carregador-aro {
+      stroke: var(--latao);
+      transform-box: view-box;
+      transform-origin: 38px 38px;
+      animation: girar 1.1s linear infinite;
+    }
+
+    & .carregador-vapor {
+      stroke: var(--latao);
+      stroke-dasharray: 100;
+      animation: desenhar-vapor 1.8s var(--curva-suave) infinite;
+    }
+  }
+
+  @keyframes desenhar-vapor {
+    0% { stroke-dashoffset: 100; }
+    45%, 60% { stroke-dashoffset: 0; }
+    100% { stroke-dashoffset: -100; }
+  }
+
+  /* Vapor ao publicar: três fios que sobem e desaparecem. */
+  .fumos {
+    position: fixed;
+    z-index: 70;
+    height: 0;
+    pointer-events: none;
+  }
+
+  .fumo {
+    position: absolute;
+    bottom: 0;
+    stroke: var(--cobre);
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    opacity: 0;
+    animation: subir-vapor 1.15s cubic-bezier(0.25, 0.6, 0.3, 1) forwards;
+
+    &:nth-child(2) { animation-delay: 0.12s; }
+    &:nth-child(3) { animation-delay: 0.24s; }
+  }
+
+  @keyframes subir-vapor {
+    0% { opacity: 0; stroke-dashoffset: 100; transform: translateY(8px); }
+    25% { opacity: 0.9; }
+    70% { opacity: 0.7; stroke-dashoffset: 0; }
+    100% { opacity: 0; stroke-dashoffset: 0; transform: translateY(-14px); }
+  }
+
+  /* Cursor-panela (só em zonas especiais, com rato). */
+  .zona-panela,
+  .zona-panela :is(a, button, summary, label) {
+    cursor: none;
+  }
+
+  .zona-panela :is(input, textarea, select, p a, li a) {
+    cursor: auto;
+  }
+
+  .cursor-panela {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 1000;
+    width: 36px;
+    height: 36px;
+    pointer-events: none;
+    opacity: 0;
+    color: #1c1714;
+    transition: opacity 0.15s ease;
+
+    &.visivel { opacity: 1; }
+    &.escondido { opacity: 0; }
+  }
+
+  .cursor-panela-corpo {
+    line-height: 0;
+    transform-origin: 2px 2px;
+    filter: drop-shadow(0 0 0.7px #f3ece2) drop-shadow(0 0 0.7px #f3ece2) drop-shadow(2px 3px 2px rgb(0 0 0 / 35%));
+    transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+
+    & .marca-vapor { opacity: 0; transition: opacity 0.18s ease; }
+
+    &.pega {
+      --escala: 1.12;
+      transform: scale(1.12) rotate(-6deg);
+      filter: drop-shadow(0 0 0.7px #f3ece2) drop-shadow(0 0 0.7px #f3ece2) drop-shadow(6px 9px 6px rgb(0 0 0 / 28%));
+
+      & .marca-vapor { opacity: 1; }
+    }
+
+    &.premir { animation: premir-panela 0.32s cubic-bezier(0.3, 0.7, 0.3, 1); }
+  }
+
+  @keyframes premir-panela {
+    0% { transform: scale(var(--escala, 1)); }
+    35% { transform: scale(0.84); }
+    72% { transform: scale(1.06); }
+    100% { transform: scale(var(--escala, 1)); }
+  }
+
+  .cursor-onda {
+    position: fixed;
+    z-index: 999;
+    width: 44px;
+    height: 44px;
+    margin: -22px 0 0 -22px;
+    border: 1.5px solid var(--cobre);
+    border-radius: 50%;
+    pointer-events: none;
+    animation: onda-panela 0.42s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+  }
+
+  @keyframes onda-panela {
+    from { opacity: 0.8; transform: scale(0.1); }
+    to { opacity: 0; transform: scale(1); }
+  }
+}
+
+@layer componentes {
+  .sobretitulo.com-icone {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+
+    & wop-icone { width: 1.35rem; height: 1.35rem; color: var(--tinta-2); }
+  }
+
+  /* Valores e títulos de cartões na letra dos títulos. */
+  .valor { font-family: var(--fonte-titulos); }
 }

@@ -1,11 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="Work on Pan">
-  <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#14b8a6"/>
-      <stop offset="1" stop-color="#0f766e"/>
-    </linearGradient>
-  </defs>
-  <rect width="32" height="32" rx="9" fill="url(#g)"/>
-  <path d="M7.5 11 11.8 22 16 13.5 20.2 22 24.5 11" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="24.5" cy="11" r="1.9" fill="#fef3c7"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Work on Pan">
+  <style>.cabo{fill:#1c1714;stroke:#1c1714}@media (prefers-color-scheme:dark){.cabo{fill:#f3ece2;stroke:#f3ece2}}</style>
+  <path class="cabo" d="M13 13L25 25" fill="none" stroke-width="7.4" stroke-linecap="round"/>
+  <path class="cabo" d="M4 4L22 9.6L15.2 12.6L12.6 15.2L9.6 22Z" stroke-width="1.6" stroke-linejoin="round"/>
+  <circle cx="38" cy="38" r="21" fill="#c8733a"/>
+  <circle cx="38" cy="38" r="14.5" fill="#8a4519"/>
+  <path d="M30.5 33L34 43L38 36.8L42 43L45.5 33" fill="none" stroke="#d4a94f" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
