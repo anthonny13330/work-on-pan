@@ -86,6 +86,7 @@
   }
 
   .botao-heroi-contorno {
+    background: none;
     border: 1.5px solid var(--inverso-linha);
     color: var(--inverso-tinta);
 
@@ -679,6 +680,7 @@
   }
 
   .botao-escuro-contorno {
+    background: none;
     border: 1.5px solid #141210;
     color: #141210;
 
@@ -1698,6 +1700,225 @@
       font-family: var(--fonte-titulos);
       font-size: clamp(3rem, 10vw, 5rem) !important;
       rotate: 6deg;
+    }
+  }
+}
+
+/* ── Fotografia, portfólio, pagamentos e perfil público ─────── */
+
+@layer paginas {
+  /* Conta */
+  .avatar-caixa .avatar { width: 4rem; height: 4rem; }
+
+  .editor-foto {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1.25rem;
+
+    & > div:last-child { flex: 1 1 16rem; }
+  }
+
+  .grelha-portfolio {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 10.5rem), 1fr));
+    gap: 0.75rem;
+    margin: 0 0 1.25rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  .trabalho {
+    overflow: hidden;
+    border: 1px solid var(--linha);
+    border-radius: var(--raio);
+    background: var(--superficie-2);
+
+    & img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+  }
+
+  .trabalho-texto {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.4rem 0.4rem 0.75rem;
+    font-size: 0.88rem;
+
+    & strong { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    & .botao-icone { width: 2.25rem; height: 2.25rem; border: 0; }
+  }
+
+  .portfolio-vazio {
+    grid-column: 1 / -1;
+    padding: 1.25rem;
+    border: 1px dashed var(--linha);
+    border-radius: var(--raio);
+    color: var(--tinta-3);
+    text-align: center;
+  }
+
+  .novo-trabalho {
+    padding-top: 1.25rem;
+    border-top: 1px dashed var(--linha);
+
+    & h3 { margin-bottom: 0.9rem; }
+  }
+
+  .zona-ficheiro {
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-height: 9rem;
+    margin-bottom: 1rem;
+    overflow: hidden;
+    border: 2px dashed var(--linha);
+    border-radius: var(--raio);
+    background: var(--superficie-2);
+    color: var(--tinta-2);
+    cursor: pointer;
+    transition: border-color var(--rapido);
+
+    &:hover { border-color: var(--cobre); }
+    &:has(input:focus-visible) { outline: 2px solid var(--ligacao); outline-offset: 2px; }
+    & input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    & img { width: 100%; max-height: 18rem; object-fit: contain; }
+    &.com-imagem .zona-ficheiro-vazia { display: none; }
+  }
+
+  .zona-ficheiro-vazia {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+
+    & wop-icone { width: 1.6rem; height: 1.6rem; }
+  }
+
+  .lista-pagamentos {
+    display: grid;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    & > li:not(.portfolio-vazio) {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem 1rem;
+      padding: 0.75rem 0.9rem;
+      border-radius: var(--raio-m);
+      background: var(--superficie-2);
+    }
+  }
+
+  .pagamento-titulo {
+    flex: 1 1 12rem;
+    min-width: 0;
+
+    & strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    & small { color: var(--tinta-3); }
+  }
+
+  /* Perfil público */
+  .perfil-pagina { max-width: 64rem; }
+
+  .faixa-perfil {
+    display: grid;
+    justify-items: center;
+    gap: 1.25rem;
+    margin-bottom: 1.75rem;
+    padding: clamp(1.75rem, 4vw, 2.75rem);
+    border-radius: var(--raio-torto);
+    background: var(--inverso-fundo);
+    color: var(--inverso-tinta);
+    text-align: center;
+
+    & .avatar-enorme { border-color: var(--inverso-fundo); }
+    & .sobretitulo { justify-content: center; color: var(--inverso-destaque); }
+    & .sobretitulo wop-icone { color: var(--inverso-tinta); }
+    & h1 { margin-bottom: 0.4rem; }
+    & .meta { justify-content: center; color: var(--inverso-tinta-2); }
+    & .acoes { justify-content: center; margin-top: 1.1rem; gap: 0.5rem; }
+
+    @media (min-width: 720px) {
+      grid-template-columns: auto 1fr;
+      justify-items: start;
+      align-items: center;
+      text-align: left;
+
+      & .sobretitulo, & .meta, & .acoes { justify-content: flex-start; }
+    }
+  }
+
+  .perfil-sobre {
+    margin-bottom: 1.75rem;
+
+    & .perfil-bio { white-space: pre-line; color: var(--tinta-2); font-size: var(--texto-l); }
+  }
+
+  /* Galeria em colunas: as imagens mantêm a proporção (efeito «mural»). */
+  .galeria {
+    columns: 3 16rem;
+    column-gap: 1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    & li { break-inside: avoid; margin-bottom: 1rem; }
+  }
+
+  .galeria-item {
+    position: relative;
+    display: block;
+    width: 100%;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid var(--linha);
+    border-radius: var(--raio);
+    background: var(--superficie-2);
+    cursor: zoom-in;
+
+    & img { width: 100%; height: auto; transition: scale 0.4s var(--curva); }
+    &:hover img { scale: 1.03; }
+  }
+
+  .galeria-legenda {
+    position: absolute;
+    left: 0.6rem;
+    bottom: 0.6rem;
+    max-width: calc(100% - 1.2rem);
+    padding: 0.3rem 0.7rem;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--superficie);
+    color: var(--tinta);
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .janela-trabalho {
+    width: min(64rem, calc(100% - 1.5rem));
+    overflow: hidden;
+  }
+
+  .trabalho-grande {
+    margin: 0;
+
+    & img { width: 100%; max-height: 72vh; object-fit: contain; background: var(--superficie-2); }
+
+    & figcaption {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 0.75rem 1rem;
+      padding: 1rem 1.25rem 1.25rem;
+
+      & h2 { font-size: 1.25rem; margin: 0 0 0.25rem; }
+      & .acoes { gap: 0.4rem; }
     }
   }
 }

@@ -192,7 +192,7 @@ function desenharJanela() {
         <ul class="factos">
           <li><wop-icone nome="orcamento"></wop-icone><span>Orçamento</span><strong>${dinheiro(p.orcamento, p.moeda)}</strong></li>
           <li><wop-icone nome="prazo"></wop-icone><span>Prazo</span><strong>${p.prazo_dias} dias</strong></li>
-          <li><wop-icone nome="perfil"></wop-icone><span>Cliente</span><strong>${nomeCliente(p.cliente)}</strong></li>
+          <li><wop-icone nome="perfil"></wop-icone><span>Cliente</span><strong><a class="nome-perfil" href="/perfil?id=${p.cliente_id}">${nomeCliente(p.cliente)}</a></strong></li>
           <li><wop-icone nome="notificacoes"></wop-icone><span>Publicado</span><strong>${dataCurta(p.criado_em)}</strong></li>
         </ul>
         <p style="white-space: pre-line; margin-top: 1rem">${p.descricao}</p>
@@ -234,6 +234,7 @@ function acaoDaJanela(p) {
   return html`
     <h3>A tua proposta</h3>
     <p class="texto-suave texto-pequeno">O cliente recebe-a no painel e abre-se uma conversa entre vocês em Mensagens.
+      Se a aceitar, paga pela plataforma e recebes o valor menos 5 % de comissão quando ele confirmar a entrega.
       Podes editá-la ou retirá-la enquanto ele não responder.</p>
     <form id="formProposta" novalidate style="margin-top: 1rem" @submit=${(e) => enviarProposta(e, p)}>
       <div id="msgProposta" role="alert" hidden></div>

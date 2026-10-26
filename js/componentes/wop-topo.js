@@ -3,7 +3,7 @@
 // No telemóvel, o menu abre como um cartão flutuante por baixo.
 import { html, render, nothing } from "../nucleo/html.js";
 import { sessao, sessaoPronta, sair, aoMudar, contarPorLer } from "../nucleo/sessao.js";
-import { alternarTema } from "../nucleo/ui.js";
+import { alternarTema, avatar } from "../nucleo/ui.js";
 
 const icone = (nome) => html`<wop-icone nome=${nome}></wop-icone>`;
 
@@ -52,7 +52,7 @@ class WopTopo extends HTMLElement {
 
   #ligacao(caminho, texto, nomeIcone, extra = nothing) {
     const atual = location.pathname.replace(/\.html$/, "").replace(/\/$/, "") || "/";
-    return html`<a href=${caminho} aria-current=${atual === caminho ? "page" : nothing}>${icone(nomeIcone)}<span>${texto}</span>${extra}</a>`;
+    return html`<a href=${caminho} aria-current=${atual === caminho ? "page" : nothing}>${typeof nomeIcone === "string" ? icone(nomeIcone) : nomeIcone}<span>${texto}</span>${extra}</a>`;
   }
 
   #ligacoes() {
@@ -75,7 +75,7 @@ class WopTopo extends HTMLElement {
       ${this.#ligacao("/painel", cliente ? "Os meus projetos" : "As minhas propostas", "painel")}
       ${this.#ligacao("/projetos", cliente ? "Projetos" : "Procurar projetos", "pesquisar")}
       ${this.#ligacao("/mensagens", "Mensagens", "mensagens", contador)}
-      ${this.#ligacao("/conta", "Conta", "perfil")}
+      ${this.#ligacao("/conta", "Conta", perfil.foto ? avatar(perfil, "avatar-mini") : "perfil")}
       <button type="button" class="so-menu-movel" @click=${sair}>${icone("sair")}<span>Sair</span></button>
     `;
   }

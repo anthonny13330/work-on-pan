@@ -10,7 +10,7 @@ class WopRodape extends HTMLElement {
           <div class="rodape-sobre">
             <a href="/" class="marca" aria-label="Work on Pan — início"><wop-logo tamanho="30" nome></wop-logo></a>
             <p>Um sítio simples para quem precisa de um trabalho feito encontrar quem o saiba fazer.
-              Os pagamentos e acordos são combinados entre cliente e freelancer.</p>
+              Os pagamentos são feitos pela plataforma e ficam retidos até o cliente confirmar a entrega.</p>
           </div>
           <nav aria-label="Plataforma">
             <h2>Plataforma</h2>
