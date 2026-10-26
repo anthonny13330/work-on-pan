@@ -2,14 +2,14 @@ import "../arranque.js";
 import { html, pintar, nothing, repeat, live } from "../nucleo/html.js";
 import { sb } from "../nucleo/supabase.js";
 import { exigirSessao, aoMudar, conversaPorLer } from "../nucleo/sessao.js";
-import { $, $$, avisar, animarEntrada, etiquetaProjeto } from "../nucleo/ui.js";
-import { dinheiro, horaCurta, iniciais, nomeCliente, nomeCompleto, traduzirErro } from "../nucleo/formato.js";
+import { $, $$, avatar, avisar, animarEntrada, etiquetaProjeto } from "../nucleo/ui.js";
+import { dinheiro, horaCurta, nomeCliente, nomeCompleto, traduzirErro } from "../nucleo/formato.js";
 
 const { user, perfil } = await exigirSessao();
 
 const CAMPOS = `*,
-  cliente:perfis!conversas_cliente_id_fkey(nome, sobrenome, empresa),
-  freelancer:perfis!conversas_freelancer_id_fkey(nome, sobrenome),
+  cliente:perfis!conversas_cliente_id_fkey(nome, sobrenome, empresa, foto),
+  freelancer:perfis!conversas_freelancer_id_fkey(nome, sobrenome, foto),
   projeto:projetos(id, titulo, estado, categoria, orcamento, moeda, prazo_dias)`;
 
 const estado = {
@@ -23,6 +23,8 @@ const estado = {
 };
 
 const caixa = $("#caixa");
+const outroPerfil = (c) => (c.cliente_id === user.id ? c.freelancer : c.cliente);
+const outroId = (c) => (c.cliente_id === user.id ? c.freelancer_id : c.cliente_id);
 const outraPessoa = (c) => (c.cliente_id === user.id ? nomeCompleto(c.freelancer) : nomeCliente(c.cliente));
 
 /* ── Lista de conversas ──────────────────────────────────────── */
@@ -58,7 +60,7 @@ const itemConversa = (c) => {
   return html`
     <li class=${porLer ? "por-ler" : ""}>
       <button type="button" aria-current=${c.id === estado.ativa ? "true" : nothing} @click=${() => abrirConversa(c.id)}>
-        <span class="avatar" aria-hidden="true">${iniciais(nome)}</span>
+        ${avatar(outroPerfil(c))}
         <span class="conversa-nome">${nome}${porLer ? html`<span class="so-leitores"> (por ler)</span>` : nothing}</span>
         <span class="conversa-hora">${horaCurta(c.ultima_mensagem_em)}</span>
         <span class="conversa-projeto">${c.projeto?.titulo || "Contacto direto"}</span>
@@ -144,9 +146,9 @@ function desenharConversa(c) {
       <div class="conversa-topo">
         <button type="button" class="voltar-lista" @click=${fecharConversa}><wop-icone nome="voltar"></wop-icone> Conversas</button>
         <div class="pessoa">
-          <span class="avatar" aria-hidden="true">${iniciais(nome)}</span>
+          ${avatar(outroPerfil(c))}
           <div style="min-width: 0">
-            <strong>${nome}</strong>
+            <a class="nome-perfil" href="/perfil?id=${outroId(c)}"><strong>${nome}</strong></a>
             <small>${p ? html`<wop-icone nome=${p.categoria || "projetos"}></wop-icone> ${p.titulo}` : "Contacto direto"}</small>
           </div>
         </div>

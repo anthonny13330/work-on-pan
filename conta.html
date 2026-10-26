@@ -23,7 +23,7 @@
 
   <main id="conteudo" class="conta-pagina">
     <header class="faixa-conta">
-      <span class="avatar avatar-grande" id="avatarConta" aria-hidden="true">?</span>
+      <div id="avatarConta" class="avatar-caixa"></div>
       <div>
         <h1 id="nomeConta">A minha conta</h1>
         <p>Conta de <strong id="tipoConta">…</strong> · <span id="emailConta">…</span></p>
@@ -32,7 +32,10 @@
 
     <div class="conta-grelha">
     <nav class="indice-conta" aria-label="Nesta página">
+      <a href="#foto"><wop-icone nome="camara"></wop-icone> Fotografia</a>
       <a href="#perfil"><wop-icone nome="perfil"></wop-icone> Perfil público</a>
+      <a href="#portfolio" id="ligacaoPortfolio" hidden><wop-icone nome="imagem"></wop-icone> Portfólio</a>
+      <a href="#pagamentos"><wop-icone nome="carteira"></wop-icone> Pagamentos</a>
       <a href="#dados"><wop-icone nome="cadeado"></wop-icone> Dados privados</a>
       <a href="#aparencia"><wop-icone nome="paleta"></wop-icone> Aparência</a>
       <a href="#seguranca"><wop-icone nome="escudo"></wop-icone> Palavra-passe</a>
@@ -40,6 +43,24 @@
     </nav>
 
     <div class="lista">
+      <section id="foto" class="cartao">
+        <h2 class="titulo-secao-icone"><wop-icone nome="camara"></wop-icone> Fotografia de perfil</h2>
+        <div class="editor-foto">
+          <div id="fotoAtual" class="foto-atual"></div>
+          <div>
+            <p class="texto-suave texto-pequeno">Aparece nas propostas, nas mensagens e no teu perfil público. Uma fotografia
+              tua, de frente e com boa luz, dá mais confiança. Cortamos ao centro em quadrado.</p>
+            <div class="acoes" style="margin-top: 0.75rem">
+              <label class="botao botao-secundario botao-pequeno escolher-ficheiro">
+                <wop-icone nome="camara"></wop-icone> Escolher fotografia
+                <input type="file" id="ficheiroFoto" accept="image/jpeg,image/png,image/webp">
+              </label>
+              <button type="button" class="botao botao-perigo botao-pequeno" id="btnRemoverFoto" hidden><wop-icone nome="lixo"></wop-icone> Remover</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section id="perfil" class="cartao">
         <h2 class="titulo-secao-icone"><wop-icone nome="perfil"></wop-icone> Perfil público</h2>
         <p class="texto-suave texto-pequeno" id="perfilExplicacao" style="margin-bottom: 1rem"></p>
@@ -104,6 +125,33 @@
         </form>
       </section>
 
+      <section id="portfolio" class="cartao" hidden>
+        <div class="cabecalho-secao" style="margin-top: 0">
+          <h2 class="titulo-secao-icone"><wop-icone nome="imagem"></wop-icone> Portfólio</h2>
+          <span class="texto-suave texto-pequeno" id="contagemPortfolio"></span>
+        </div>
+        <p class="texto-suave texto-pequeno" style="margin-bottom: 1rem">Mostra até 12 trabalhos teus. Os clientes veem-nos no teu
+          perfil público antes de aceitar uma proposta. Usa só imagens que tenhas direito a mostrar.</p>
+        <ul class="grelha-portfolio" id="listaPortfolio"></ul>
+        <form id="formPortfolio" class="novo-trabalho" novalidate>
+          <h3>Acrescentar um trabalho</h3>
+          <label class="zona-ficheiro" id="zonaFicheiro">
+            <input type="file" id="ficheiroTrabalho" name="ficheiro" accept="image/jpeg,image/png,image/webp">
+            <span class="zona-ficheiro-vazia"><wop-icone nome="imagem"></wop-icone> Escolher imagem (JPG, PNG ou WebP)</span>
+            <img id="previaTrabalho" alt="" hidden>
+          </label>
+          <div class="campo">
+            <label for="tituloTrabalho">Título</label>
+            <input type="text" id="tituloTrabalho" name="titulo" maxlength="80" placeholder="Ex.: Identidade visual para a Padaria Lua">
+          </div>
+          <div class="campo">
+            <label for="descricaoTrabalho">Descrição <span class="texto-suave">(opcional)</span></label>
+            <textarea id="descricaoTrabalho" name="descricao" maxlength="300" placeholder="O que fizeste, para quem e com que ferramentas."></textarea>
+          </div>
+          <button type="submit" class="botao botao-principal"><wop-icone nome="mais"></wop-icone> Acrescentar ao portfólio</button>
+        </form>
+      </section>
+
       <section id="dados" class="cartao">
         <h2 class="titulo-secao-icone"><wop-icone nome="cadeado"></wop-icone> Dados privados</h2>
         <p class="texto-suave texto-pequeno" style="margin-bottom: 1rem">Só tu vês estes dados.</p>
@@ -117,6 +165,12 @@
             <label for="telefone">Telefone <span class="texto-suave">(opcional)</span></label>
             <div class="entrada-icone"><wop-icone nome="telefone"></wop-icone><input type="tel" id="telefone" name="telefone" autocomplete="tel" maxlength="20"></div>
             <span class="ajuda">Só é usado se precisarmos de te contactar sobre a conta.</span>
+          </div>
+          <div class="campo" id="campoPayPal" hidden>
+            <label for="paypalEmail">E-mail PayPal para receber</label>
+            <div class="entrada-icone"><wop-icone nome="carteira"></wop-icone><input type="email" id="paypalEmail" name="paypal_email" autocomplete="email" maxlength="120" placeholder="o-teu-email@exemplo.pt"></div>
+            <span class="ajuda">Quando o cliente confirma a entrega, enviamos para aqui o valor da proposta menos 5 % de comissão.
+              Tem de ser o e-mail de uma conta PayPal.</span>
           </div>
           <button type="submit" class="botao botao-secundario">Guardar dados privados</button>
         </form>
@@ -154,6 +208,12 @@
           <div class="forca" data-forca-de="senhaNova"></div>
           <button type="submit" class="botao botao-secundario">Mudar palavra-passe</button>
         </form>
+      </section>
+
+      <section id="pagamentos" class="cartao">
+        <h2 class="titulo-secao-icone"><wop-icone nome="carteira"></wop-icone> Pagamentos</h2>
+        <p class="texto-suave texto-pequeno" id="explicacaoPagamentos" style="margin-bottom: 1rem"></p>
+        <ul class="lista-pagamentos" id="listaPagamentos"></ul>
       </section>
 
       <section id="privacidade" class="cartao">

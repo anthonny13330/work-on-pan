@@ -3,10 +3,11 @@ import { html, pintar, nothing, repeat } from "../nucleo/html.js";
 import { sb } from "../nucleo/supabase.js";
 import { exigirSessao, aoMudar, irParaConversa } from "../nucleo/sessao.js";
 import {
-  $, $$, avisar, animarEntrada, confirmar, estadoVazio, etiquetaProjeto, etiquetaProposta, mostrarMensagem, vaporar,
+  $, $$, avatar, avisar, animarEntrada, confirmar, estadoVazio, etiquetaProjeto, etiquetaProposta, mostrarMensagem, vaporar,
 } from "../nucleo/ui.js";
+import { libertarPagamento, linhaPagamento, pagamentoAtivo, pagarProposta, tratarRegressoPayPal } from "../nucleo/pagamentos.js";
 import {
-  CATEGORIAS, MOEDAS, dinheiro, dataCurta, iniciais, nomeCategoria, nomeCliente, nomeCompleto,
+  CATEGORIAS, MOEDAS, dinheiro, dataCurta, nomeCategoria, nomeCliente, nomeCompleto,
   listaCompetencias, plural, traduzirErro,
 } from "../nucleo/formato.js";
 
@@ -31,8 +32,9 @@ function iniciarCliente() {
   $("#pubMoeda").value = perfil.moeda || "EUR";
 
   prepararSeparadores();
-  carregarMeusProjetos();
-  aoMudar(["projetos", "propostas"], carregarMeusProjetos);
+  // Ao voltar do PayPal, confirma primeiro o pagamento e só depois mostra os projetos.
+  tratarRegressoPayPal().then(carregarMeusProjetos);
+  aoMudar(["projetos", "propostas", "pagamentos"], carregarMeusProjetos);
   carregarFreelancers();
   $("#pesquisaFreelancers").addEventListener("input", desenharFreelancers);
   $("#formPublicar").addEventListener("submit", publicarProjeto);
@@ -77,8 +79,9 @@ async function carregarMeusProjetos() {
   const { data, error } = await sb
     .from("projetos")
     .select(`*,
-      escolhido:perfis!projetos_freelancer_id_fkey(nome, sobrenome),
-      propostas(*, freelancer:perfis!propostas_freelancer_id_fkey(nome, sobrenome, area, competencias))`)
+      escolhido:perfis!projetos_freelancer_id_fkey(nome, sobrenome, foto),
+      pagamentos(id, estado, valor, moeda, valor_freelancer),
+      propostas(*, freelancer:perfis!propostas_freelancer_id_fkey(nome, sobrenome, area, competencias, foto))`)
     .eq("cliente_id", user.id)
     .order("criado_em", { ascending: false })
     .order("criado_em", { referencedTable: "propostas", ascending: false });
@@ -124,13 +127,14 @@ function desenharMeusProjetos() {
 
 const AJUDA_ESTADO = {
   aberto: "Fechar esconde o projeto de «Projetos abertos».",
-  em_andamento: "Quando o trabalho estiver entregue, marca-o como concluído.",
+  em_andamento: "Quando receberes o trabalho final, confirma a entrega para libertar o pagamento.",
   concluido: "Trabalho terminado.",
   fechado: "Fechado: os freelancers já não o veem.",
 };
 
 function cartaoMeuProjeto(p) {
   const propostas = p.propostas.filter((pp) => pp.estado !== "retirada");
+  p.pagamento = pagamentoAtivo(p.pagamentos);
   return html`
     <article class="cartao cartao-projeto">
       <div class="item-topo">
@@ -147,6 +151,7 @@ function cartaoMeuProjeto(p) {
       </div>
       <p class="item-descricao">${p.descricao}</p>
       ${p.escolhido ? html`<p class="escolhido"><wop-icone nome="estrela"></wop-icone>Freelancer escolhido: <strong>${nomeCompleto(p.escolhido)}</strong></p>` : nothing}
+      ${linhaPagamento(p.pagamento, false)}
       <div class="sub-lista">
         <strong>${propostas.length ? `Propostas recebidas (${propostas.length})` : "Ainda sem propostas"}</strong>
         ${propostas.length
@@ -170,9 +175,9 @@ function cartaoPropostaRecebida(projeto, pp) {
     <div class="proposta">
       <div class="item-topo">
         <div class="pessoa">
-          <span class="avatar" aria-hidden="true">${iniciais(nome)}</span>
+          ${avatar(pp.freelancer)}
           <div>
-            <strong>${nome}</strong>${pp.freelancer?.area
+            <a class="nome-perfil" href="/perfil?id=${pp.freelancer_id}">${nome}</a>${pp.freelancer?.area
               ? html` <span class="texto-suave texto-pequeno">· ${nomeCategoria(pp.freelancer.area)}</span>` : nothing}<br>
             <span class="texto-suave texto-pequeno">${dinheiro(pp.valor, pp.moeda)} · entrega em ${pp.prazo_entrega} dias · ${dataCurta(pp.criado_em)}</span>
           </div>
@@ -183,7 +188,7 @@ function cartaoPropostaRecebida(projeto, pp) {
       <div class="acoes">
         ${podeDecidir
           ? html`
-              <button class="botao botao-principal botao-pequeno" @click=${() => responderProposta(projeto, pp, true)}><wop-icone nome="aceitar"></wop-icone> Aceitar e começar o projeto</button>
+              <button class="botao botao-principal botao-pequeno" @click=${() => pagarProposta(pp, nome)}><wop-icone nome="carteira"></wop-icone> Aceitar e pagar ${dinheiro(pp.valor, pp.moeda)}</button>
               <button class="botao botao-perigo botao-pequeno" @click=${() => responderProposta(projeto, pp, false)}><wop-icone nome="recusar"></wop-icone> Recusar</button>`
           : nothing}
         <button class="botao botao-secundario botao-pequeno" @click=${() => irParaConversa(pp.freelancer_id, projeto.id)}>
@@ -203,7 +208,9 @@ function acoesProjeto(p) {
     case "em_andamento":
       return html`
         <button class="botao botao-secundario botao-pequeno" @click=${() => irParaConversa(p.freelancer_id, p.id)}><wop-icone nome="mensagens"></wop-icone> Falar com o freelancer</button>
-        <button class="botao botao-principal botao-pequeno" @click=${() => mudarEstado(p, "concluido")}><wop-icone nome="aceitar"></wop-icone> Marcar como concluído</button>`;
+        ${p.pagamento?.estado === "retido"
+          ? html`<button class="botao botao-principal botao-pequeno" @click=${async () => (await libertarPagamento(p.pagamento, nomeCompleto(p.escolhido))) && carregarMeusProjetos()}><wop-icone nome="carteira"></wop-icone> Confirmar entrega e libertar pagamento</button>`
+          : html`<button class="botao botao-principal botao-pequeno" @click=${() => mudarEstado(p, "concluido")}><wop-icone nome="aceitar"></wop-icone> Marcar como concluído</button>`}`;
     default:
       return apagar;
   }
@@ -313,7 +320,7 @@ let freelancers = [];
 async function carregarFreelancers() {
   const { data, error } = await sb
     .from("perfis")
-    .select("id, nome, sobrenome, area, bio, valor_hora, moeda, competencias, disponivel")
+    .select("id, nome, sobrenome, area, bio, valor_hora, moeda, competencias, disponivel, foto")
     .eq("tipo", "freelancer")
     .order("disponivel", { ascending: false })
     .order("atualizado_em", { ascending: false });
@@ -343,9 +350,9 @@ const cartaoFreelancer = (f) => html`
   <article class="cartao">
     <div class="item-topo">
       <div class="pessoa">
-        <span class="avatar" aria-hidden="true">${iniciais(nomeCompleto(f))}</span>
+        ${avatar(f)}
         <div>
-          <h3>${nomeCompleto(f)}</h3>
+          <h3><a class="item-titulo" href="/perfil?id=${f.id}">${nomeCompleto(f)}</a></h3>
           <span class="texto-suave texto-pequeno com-icone-linha">${f.area ? html`<wop-icone nome=${f.area}></wop-icone>${nomeCategoria(f.area)}` : "Área não indicada"}</span>
         </div>
       </div>
@@ -373,19 +380,27 @@ function iniciarFreelancer() {
 
   carregarPropostas();
   contarAbertos();
+  verificarPayPal();
   aoMudar(["propostas"], carregarPropostas, `freelancer_id=eq.${user.id}`);
+  aoMudar(["pagamentos"], carregarPropostas, `freelancer_id=eq.${user.id}`);
   aoMudar(["projetos"], contarAbertos);
 }
 
 async function carregarPropostas() {
   const { data, error } = await sb
     .from("propostas")
-    .select("*, projeto:projetos(id, titulo, estado, cliente_id, cliente:perfis!projetos_cliente_id_fkey(nome, sobrenome, empresa))")
+    .select("*, pagamentos(id, estado, valor, moeda, valor_freelancer), projeto:projetos(id, titulo, estado, cliente_id, cliente:perfis!projetos_cliente_id_fkey(nome, sobrenome, empresa))")
     .eq("freelancer_id", user.id)
     .order("atualizado_em", { ascending: false });
   if (error) return mostrarErro("#listaPropostas", error);
   minhasPropostas = data;
   desenharPropostas();
+}
+
+// Sem e-mail PayPal, o freelancer não consegue receber: avisa no topo do painel.
+async function verificarPayPal() {
+  const { data } = await sb.from("contas").select("paypal_email").eq("id", user.id).maybeSingle();
+  $("#avisoPayPal").hidden = Boolean(data?.paypal_email);
 }
 
 async function contarAbertos() {
@@ -409,7 +424,7 @@ function desenharResumoFreelancer() {
 
 const NOTA_PROPOSTA = {
   pendente: "O cliente ainda não respondeu.",
-  aceite: "O cliente escolheu-te. Combinem os detalhes em Mensagens.",
+  aceite: "O cliente escolheu-te e pagou. Combinem os detalhes em Mensagens.",
   recusada: "O cliente escolheu não avançar com esta proposta.",
   fechada: "O projeto foi fechado ou entregue a outra pessoa.",
   retirada: "Retiraste esta proposta.",
@@ -447,6 +462,7 @@ function cartaoMinhaProposta(pp) {
         ${etiquetaProposta(pp.estado)}
       </div>
       <p class="item-descricao">${pp.mensagem}</p>
+      ${linhaPagamento(pagamentoAtivo(pp.pagamentos), true)}
       <div class="item-rodape">
         <span class="texto-suave texto-pequeno">${NOTA_PROPOSTA[pp.estado]}${reenviar ? " O projeto ainda está aberto, podes voltar a enviá-la." : ""}</span>
         <div class="acoes">

@@ -27,6 +27,14 @@ export const ESTADOS_PROPOSTA = {
   fechada: { texto: "Projeto fechado", classe: "etiqueta-neutra" },
 };
 
+export const ESTADOS_PAGAMENTO = {
+  pendente: { texto: "À espera do PayPal", classe: "etiqueta-neutra" },
+  retido: { texto: "Pagamento retido", classe: "etiqueta-aviso" },
+  libertado: { texto: "Pago ao freelancer", classe: "etiqueta-ok" },
+  reembolsado: { texto: "Reembolsado", classe: "etiqueta-neutra" },
+  cancelado: { texto: "Cancelado", classe: "etiqueta-neutra" },
+};
+
 const formatosMoeda = new Map();
 
 export function dinheiro(valor, moeda = "EUR") {

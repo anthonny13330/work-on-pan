@@ -1551,3 +1551,81 @@
     }
   }
 }
+
+/* ── Fotografias, pagamentos e portfólio ─────────────────────── */
+
+@layer componentes {
+  img.avatar {
+    object-fit: cover;
+    padding: 0;
+    background: var(--superficie-2);
+  }
+
+  .avatar-mini {
+    width: 1.35rem;
+    height: 1.35rem;
+    font-size: 0.6rem;
+  }
+
+  .avatar-enorme {
+    width: 7rem;
+    height: 7rem;
+    border: 3px solid var(--fundo);
+    font-family: var(--fonte-titulos);
+    font-size: 2.2rem;
+    box-shadow: 0 0 0 2px var(--cobre);
+  }
+
+  .nome-perfil {
+    color: inherit;
+    font-weight: 600;
+    text-decoration: none;
+
+    &:hover { color: var(--ligacao); text-decoration: underline; }
+  }
+
+  /* Estado do pagamento dentro de um cartão de projeto ou proposta. */
+  .linha-pagamento {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0.85rem 0 0;
+    padding: 0.65rem 0.9rem;
+    border-radius: var(--raio-m);
+    background: var(--aviso-suave);
+    color: var(--tinta);
+    font-size: 0.9rem;
+
+    & > wop-icone { width: 1.25rem; height: 1.25rem; }
+    & > span:not(.selo-testes) { flex: 1 1 14rem; }
+
+    &.estado-libertado { background: var(--ok-suave); }
+    &.estado-reembolsado { background: var(--superficie-2); }
+  }
+
+  .selo-testes {
+    padding: 0.1rem 0.5rem;
+    border: 1px dashed currentColor;
+    border-radius: 999px;
+    color: var(--tinta-3);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  /* Botão que abre a escolha de ficheiro (o input fica invisível mas acessível). */
+  .escolher-ficheiro {
+    position: relative;
+
+    & input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    &:has(input:focus-visible) { outline: 2px solid var(--ligacao); outline-offset: 2px; }
+  }
+}

@@ -1,6 +1,7 @@
 // Peças de interface partilhadas: tema, avisos, janelas de confirmação e animações.
 import { html, render, nothing } from "./html.js";
-import { ESTADOS_PROJETO, ESTADOS_PROPOSTA } from "./formato.js";
+import { ESTADOS_PAGAMENTO, ESTADOS_PROJETO, ESTADOS_PROPOSTA, iniciais, nomeCompleto } from "./formato.js";
+import { PASTAS, urlImagem } from "./imagens.js";
 
 export const $ = (seletor, raiz = document) => raiz.querySelector(seletor);
 export const $$ = (seletor, raiz = document) => [...raiz.querySelectorAll(seletor)];
@@ -208,6 +209,15 @@ export const etiqueta = (mapa, estado) => {
 
 export const etiquetaProjeto = (estado) => etiqueta(ESTADOS_PROJETO, estado);
 export const etiquetaProposta = (estado) => etiqueta(ESTADOS_PROPOSTA, estado);
+export const etiquetaPagamento = (estado) => etiqueta(ESTADOS_PAGAMENTO, estado);
+
+/** Fotografia de perfil, ou as iniciais quando não há. */
+export const avatar = (pessoa, classe = "") => {
+  const nome = pessoa?.empresa || nomeCompleto(pessoa);
+  return pessoa?.foto
+    ? html`<img class="avatar ${classe}" src=${urlImagem(PASTAS.avatar, pessoa.foto)} alt="" loading="lazy" decoding="async">`
+    : html`<span class="avatar ${classe}" aria-hidden="true">${iniciais(nome)}</span>`;
+};
 
 // Pequena ilustração para estados vazios (linhas simples, segue a cor do tema).
 // Estados vazios: a panela vazia, vista de cima.
@@ -234,7 +244,7 @@ export function mostrarMensagem(alvo, texto, tipo = "erro") {
 
 // Desativa o botão e mostra um texto enquanto a ação decorre.
 export async function aCarregar(botao, texto, acao) {
-  const original = botao.textContent;
+  const original = [...botao.childNodes]; // guarda também os ícones
   botao.disabled = true;
   botao.textContent = texto;
   botao.classList.add("a-carregar");
@@ -242,7 +252,7 @@ export async function aCarregar(botao, texto, acao) {
     return await acao();
   } finally {
     botao.disabled = false;
-    botao.textContent = original;
+    botao.replaceChildren(...original);
     botao.classList.remove("a-carregar");
   }
 }

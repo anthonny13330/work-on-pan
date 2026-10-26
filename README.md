@@ -10,9 +10,10 @@ Web nativa moderna, **sem passo de build**: HTML + CSS + módulos ES, com [Supab
 | --- | --- | --- |
 | `/` | todos | Página de entrada: o que é, como funciona, projetos recentes, perguntas frequentes. |
 | `/projetos` | todos | Projetos abertos com filtros no endereço. `?p=<id>` abre um projeto (link partilhável). Freelancers enviam propostas. |
-| `/painel` | com sessão | Cliente: projetos, propostas recebidas (aceitar/recusar), publicar, procurar freelancers. Freelancer: propostas (editar, retirar, reenviar). |
+| `/painel` | com sessão | Cliente: projetos, propostas recebidas (aceitar e pagar pelo PayPal, recusar), confirmar entrega e libertar pagamento, publicar, procurar freelancers. Freelancer: propostas (editar, retirar, reenviar) e estado dos pagamentos. |
 | `/mensagens` | com sessão | Conversas em tempo real, filtro «por ler», contador no cabeçalho. |
-| `/conta` | com sessão | Perfil público, dados privados, tema, palavra-passe, exportar e apagar dados (RGPD). |
+| `/conta` | com sessão | Fotografia, perfil público, portfólio (freelancer), dados privados e e-mail PayPal, tema, palavra-passe, histórico de pagamentos, exportar e apagar dados (RGPD). |
+| `/perfil?id=<id>` | todos | Perfil público: apresentação, competências e portfólio (freelancer) ou projetos abertos (cliente). |
 | `/entrar`, `/registar` | sem sessão | Entrar, recuperar palavra-passe, reenviar confirmação, criar conta. |
 | `/privacidade`, `/termos` | todos | Política de privacidade (RGPD) e termos. |
 
@@ -63,6 +64,10 @@ Ver [`supabase/esquema.sql`](supabase/esquema.sql). Chaves estrangeiras com `on 
 regras de negócio em funções (`enviar_proposta`, `responder_proposta`, `retirar_proposta`, `abrir_conversa`,
 `marcar_conversa_lida`, `exportar_os_meus_dados`, `apagar_a_minha_conta`) e gatilhos para as invariantes.
 
+[`supabase/02_pagamentos_e_imagens.sql`](supabase/02_pagamentos_e_imagens.sql) acrescenta os pagamentos retidos
+(tabela `pagamentos`, só escrita pela função do servidor), o e-mail PayPal em `contas`, a fotografia em `perfis`, a tabela
+`portfolio` e os baldes de imagens `avatares` e `portfolio` (cada pessoa só escreve na sua pasta).
+
 ## Correr localmente
 
 Qualquer servidor estático serve, mas os endereços limpos (`/painel`) precisam de reescrita para `painel.html`.
@@ -76,3 +81,28 @@ O mais simples é `npx vercel dev`.
 3. Em `js/config.js`, preencher `RESPONSAVEL_DADOS` e `CONTACTO_PRIVACIDADE`.
 
 O plano gratuito pausa o projeto ao fim de uma semana sem uso; se o site deixar de carregar dados, reativa-o no painel.
+
+## Pagamentos (PayPal sandbox) e imagens — como ativar
+
+O dinheiro circula assim: o cliente aceita uma proposta **pagando-a** pelo PayPal → o valor fica **retido** na conta da
+plataforma → quando o cliente confirma a entrega, a função do servidor envia ao freelancer o valor **menos 5 %**
+(PayPal Payouts). Quem fala com o PayPal é só a Edge Function [`supabase/functions/pagamentos`](supabase/functions/pagamentos/index.ts);
+as chaves nunca vão para o browser.
+
+**Ordem certa (antes de juntar este ramo ao `main`):**
+
+1. **Base de dados:** Supabase → SQL Editor → cola e corre `supabase/02_pagamentos_e_imagens.sql` (uma vez).
+2. **Credenciais PayPal sandbox:** em [developer.paypal.com](https://developer.paypal.com) → *Apps & Credentials* →
+   separador *Sandbox* → *Create App* (tipo Merchant). Copia o *Client ID* e o *Secret*. Em *Testing Tools → Sandbox Accounts*
+   tens uma conta *Personal* (para pagar como cliente) e podes criar outra para usar como e-mail PayPal de um freelancer.
+3. **Segredos da função:** Supabase → Edge Functions → *Secrets* → acrescenta `PAYPAL_CLIENT_ID`, `PAYPAL_SECRET`,
+   `PAYPAL_AMBIENTE` = `sandbox` e `SITE_URL` = `https://work-on-pan.vercel.app`.
+4. **Publicar a função:** Supabase → Edge Functions → *Deploy a new function* → *Via Editor*, nome `pagamentos`,
+   cola o conteúdo de `supabase/functions/pagamentos/index.ts` e publica (com «Verify JWT» ligado).
+   Com a CLI: `supabase functions deploy pagamentos`.
+5. Junta o ramo ao `main`.
+
+**Para passar a dinheiro real:** troca as credenciais pelas de *Live*, `PAYPAL_AMBIENTE` = `live` e, em `js/config.js`,
+`PAGAMENTOS_MODO = "live"`. Antes disso, confirma com um contabilista/jurista: reter dinheiro de terceiros num marketplace
+na UE pode exigir o produto de marketplaces do PayPal (Commerce Platform) ou licença de instituição de pagamento, e os
+registos de pagamento podem ter de ser guardados pelo prazo fiscal.

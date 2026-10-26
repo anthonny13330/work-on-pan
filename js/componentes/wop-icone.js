@@ -44,6 +44,10 @@ export const ICONES = {
   fechar: '<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>',
   voltar: '<path d="M19 12H5M10.5 6.5L5 12l5.5 5.5"/>',
   enviar: '<path d="M20.5 3.5L3.5 10.2l6.8 3 3 6.8z"/><path class="cl" d="M20.5 3.5l-10.2 9.7"/>',
+  imagem: '<rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M3.5 16l5-5 4 4 2.5-2.5 5.5 5.5"/><circle class="c" cx="15.5" cy="9" r="1.7"/>',
+  carteira: '<path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H17v3"/><rect x="4" y="8" width="16" height="11.5" rx="2.5"/><rect class="cs" x="14" y="11.5" width="6" height="4.5" rx="1.5"/>',
+  partilhar: '<circle cx="6.5" cy="12" r="2.5"/><circle cx="17.5" cy="6" r="2.5"/><circle class="cs" cx="17.5" cy="18" r="2.5"/><path d="M8.7 10.8l6.6-3.6M8.7 13.2l6.6 3.6"/>',
+  camara: '<path d="M4 8.5A2 2 0 0 1 6 6.5h2.2l1.6-2h4.4l1.6 2H18a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle class="cs" cx="12" cy="12.5" r="3.4"/>',
   // Áreas de trabalho.
   design: '<path d="M12 3.5l6 7.5-3 8H9l-3-8z"/><path d="M12 3.5v6.3"/><circle class="cs" cx="12" cy="11.8" r="1.9"/><path class="cl" d="M8.5 21.2h7"/>',
   dev: '<path d="M8 7l-5 5 5 5M16 7l5 5-5 5"/><path class="cl" d="M13.6 5l-3.2 14"/>',
