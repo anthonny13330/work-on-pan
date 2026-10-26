@@ -85,13 +85,13 @@ O plano gratuito pausa o projeto ao fim de uma semana sem uso; se o site deixar 
 ## Pagamentos (PayPal sandbox) e imagens — como ativar
 
 O dinheiro circula assim: o cliente aceita uma proposta **pagando-a** pelo PayPal → o valor fica **retido** na conta da
-plataforma → quando o cliente confirma a entrega, a função do servidor envia ao freelancer o valor **menos 5 %**
+plataforma → quando o cliente confirma a entrega, a função do servidor envia ao freelancer o valor **menos 8 %**
 (PayPal Payouts). Quem fala com o PayPal é só a Edge Function [`supabase/functions/pagamentos`](supabase/functions/pagamentos/index.ts);
 as chaves nunca vão para o browser.
 
 **Ordem certa (antes de juntar este ramo ao `main`):**
 
-1. **Base de dados:** Supabase → SQL Editor → cola e corre `supabase/02_pagamentos_e_imagens.sql` (uma vez).
+1. **Base de dados:** Supabase → SQL Editor → cola e corre `supabase/02_pagamentos_e_imagens.sql` e depois `supabase/03_comissao_8.sql` (cada um uma vez).
 2. **Credenciais PayPal sandbox:** em [developer.paypal.com](https://developer.paypal.com) → *Apps & Credentials* →
    separador *Sandbox* → *Create App* (tipo Merchant). Copia o *Client ID* e o *Secret*. Em *Testing Tools → Sandbox Accounts*
    tens uma conta *Personal* (para pagar como cliente) e podes criar outra para usar como e-mail PayPal de um freelancer.

@@ -234,7 +234,7 @@ function acaoDaJanela(p) {
   return html`
     <h3>A tua proposta</h3>
     <p class="texto-suave texto-pequeno">O cliente recebe-a no painel e abre-se uma conversa entre vocês em Mensagens.
-      Se a aceitar, paga pela plataforma e recebes o valor menos 5 % de comissão quando ele confirmar a entrega.
+      Se a aceitar, paga pela plataforma e recebes o valor menos 8 % de comissão quando ele confirmar a entrega.
       Podes editá-la ou retirá-la enquanto ele não responder.</p>
     <form id="formProposta" novalidate style="margin-top: 1rem" @submit=${(e) => enviarProposta(e, p)}>
       <div id="msgProposta" role="alert" hidden></div>
