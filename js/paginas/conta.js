@@ -300,7 +300,7 @@ if (freelancer) carregarPortfolio();
 /* ── Pagamentos ──────────────────────────────────────────────── */
 
 $("#explicacaoPagamentos").textContent = freelancer
-  ? "Os pagamentos dos teus projetos. O dinheiro fica retido até o cliente confirmar a entrega; depois enviamos-te o valor menos 5 % de comissão."
+  ? "Os pagamentos dos teus projetos. O dinheiro fica retido até o cliente confirmar a entrega; depois enviamos-te o valor menos 8 % de comissão."
   : "O que pagaste pela plataforma. O dinheiro fica retido até confirmares a entrega e só depois é enviado ao freelancer.";
 
 sb.from("pagamentos")

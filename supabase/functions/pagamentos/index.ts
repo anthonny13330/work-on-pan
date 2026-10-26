@@ -5,7 +5,7 @@
 //
 //   criar     → prepara o pagamento de uma proposta e devolve o endereço do PayPal para pagar.
 //   capturar  → depois de a pessoa aprovar no PayPal, recebe o dinheiro (fica retido) e aceita a proposta.
-//   libertar  → o cliente confirma a entrega: envia ao freelancer o valor menos 5 % (PayPal Payouts).
+//   libertar  → o cliente confirma a entrega: envia ao freelancer o valor menos 8 % (PayPal Payouts).
 //
 // Segredos (Supabase → Edge Functions → Secrets):
 //   PAYPAL_CLIENT_ID, PAYPAL_SECRET   credenciais da app PayPal (sandbox ou live)
@@ -195,7 +195,7 @@ async function libertar(uid: string, pagamentoId: string) {
       recipient_type: "EMAIL",
       receiver: conta.paypal_email,
       amount: { value: valorPayPal(pag.valor_freelancer), currency: pag.moeda },
-      note: "Pagamento de projeto no Work on Pan (valor menos 5 % de comissão).",
+      note: "Pagamento de projeto no Work on Pan (valor menos 8 % de comissão).",
       sender_item_id: pag.id,
     }],
   });

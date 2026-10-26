@@ -52,7 +52,7 @@ export async function libertarPagamento(pagamento, nome) {
     titulo: "Confirmar a entrega?",
     texto:
       `Confirma só depois de teres recebido o trabalho final. ${nome} recebe ` +
-      `${dinheiro(pagamento.valor_freelancer, pagamento.moeda)} no PayPal (o valor da proposta menos 5 % de comissão) ` +
+      `${dinheiro(pagamento.valor_freelancer, pagamento.moeda)} no PayPal (o valor da proposta menos 8 % de comissão) ` +
       `e o projeto fica concluído. Não é possível desfazer.` + notaTestes,
     sim: "Confirmar e libertar o pagamento",
   });
